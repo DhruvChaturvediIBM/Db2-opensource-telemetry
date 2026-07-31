@@ -1076,7 +1076,11 @@ async function loadFromApi(){
     // Surface the server-side error message for debugging
     if(!res.ok){
       let reason = `HTTP ${res.status}`;
-      try{ const j = await res.json(); reason = j.error || reason; }catch(_){}
+      try{
+        const j = await res.json();
+        reason = j.error || reason;
+        if(j.errors) console.warn('[db2-dash]   per-package errors:', j.errors);
+      }catch(_){}
       console.warn(`[db2-dash] /api/stats → ${reason} (${elapsed}ms)`);
       return { ok: false, reason };
     }

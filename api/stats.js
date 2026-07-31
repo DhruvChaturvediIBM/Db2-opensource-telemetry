@@ -1,12 +1,8 @@
 /**
  * Vercel Serverless Function — /api/stats
  * Fetches pepy.tech for all Db2 connector packages and returns JSON.
- * Called by the frontend on load and polled hourly.
- * Vercel CDN caches the response for 1 hour (s-maxage=3600).
  *
- * Schedule: vercel.json crons trigger this at the top of every hour.
- *
- * Environment variables (Vercel dashboard → Settings → Environment Variables):
+ * Environment variables (Vercel → Settings → Environment Variables):
  *   PEPY_API_KEY  — pepy.tech API key
  */
 
@@ -22,12 +18,23 @@ const PACKAGES = [
 ];
 
 async function fetchPepy(pkg, key) {
-  const res = await fetch(PEPY_BASE + pkg, {
-    headers: { "X-Api-Key": key, "User-Agent": "db2-dashboard/1.0" },
-    signal: AbortSignal.timeout(10_000),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(PEPY_BASE + pkg, {
+      headers: { "X-Api-Key": key, "User-Agent": "db2-dashboard/1.0" },
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status}${body ? ": " + body.slice(0, 120) : ""}`);
+    }
+    return res.json();
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
+  }
 }
 
 function processPackage(d) {
@@ -53,47 +60,65 @@ function processPackage(d) {
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=600");
 
   const key = process.env.PEPY_API_KEY;
   if (!key) {
     console.error("[api/stats] PEPY_API_KEY env var is not set");
-    return res.status(500).json({ error: "PEPY_API_KEY env var is not set — add it in Vercel → Settings → Environment Variables" });
+    return res.status(500).json({
+      error: "PEPY_API_KEY env var is not set",
+      hint: "Add it in Vercel → Settings → Environment Variables, then redeploy",
+    });
   }
 
-  console.log(`[api/stats] fetching ${PACKAGES.length} packages…`);
+  console.log(`[api/stats] fetching ${PACKAGES.length} packages  key=****${key.slice(-4)}`);
+
   const results = await Promise.allSettled(
     PACKAGES.map(async (pkg) => {
+      const t0 = Date.now();
       try {
         const d = await fetchPepy(pkg, key);
         const data = processPackage(d);
-        console.log(`[api/stats]   ${pkg}: total=${data.total_downloads} 30d=${data.last_month} 1d=${data.last_day}`);
+        console.log(`[api/stats]   OK  ${pkg}  total=${data.total_downloads}  30d=${data.last_month}  1d=${data.last_day}  (${Date.now()-t0}ms)`);
         return { pkg, data };
       } catch (err) {
-        console.error(`[api/stats]   ${pkg}: FAILED — ${err.message}`);
+        console.error(`[api/stats]   ERR ${pkg}  ${err.message}  (${Date.now()-t0}ms)`);
         throw err;
       }
     })
   );
 
   const packages = {};
-  const failed = [];
+  const errors = {};
   for (const r of results) {
     if (r.status === "fulfilled") {
       packages[r.value.pkg] = r.value.data;
     } else {
-      failed.push(r.reason?.message || "unknown");
+      const pkg = PACKAGES[results.indexOf(r)];
+      errors[pkg] = r.reason?.message || "unknown error";
     }
   }
 
-  if (Object.keys(packages).length === 0) {
-    console.error("[api/stats] all packages failed:", failed);
-    return res.status(500).json({ error: "all pepy.tech fetches failed", details: failed });
+  // Return partial success if at least one package loaded
+  const okCount = Object.keys(packages).length;
+  if (okCount === 0) {
+    console.error("[api/stats] all packages failed:", errors);
+    return res.status(500).json({
+      error: "all pepy.tech fetches failed",
+      errors,
+    });
   }
 
-  console.log(`[api/stats] done — ${Object.keys(packages).length}/${PACKAGES.length} packages OK`);
+  if (okCount < PACKAGES.length) {
+    console.warn(`[api/stats] partial: ${okCount}/${PACKAGES.length} ok, errors:`, errors);
+  }
+
+  console.log(`[api/stats] done — ${okCount}/${PACKAGES.length} packages OK`);
+
+  // Cache at CDN edge for 1 hour
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=600");
   return res.status(200).json({
     fetched_at: new Date().toISOString(),
     packages,
+    ...(Object.keys(errors).length > 0 && { partial_errors: errors }),
   });
 }
