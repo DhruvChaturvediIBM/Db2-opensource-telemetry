@@ -327,21 +327,35 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
 .modal-body{padding:16px 20px 20px;}
 .modal-canvas-wrap{height:300px;}
 
-/* ── Fetch-failure notification banner ── */
-.fetch-fail-overlay{display:none;position:fixed;inset:0;background:rgba(22,22,22,.55);z-index:9500;align-items:flex-end;justify-content:center;padding:0 0 32px;}
+/* ── Skeleton shimmer ── */
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.skel{
+  display:inline-block;width:100%;height:1em;border-radius:2px;
+  background:linear-gradient(90deg,var(--cds-border-subtle-00) 25%,var(--cds-layer-02) 50%,var(--cds-border-subtle-00) 75%);
+  background-size:800px 100%;
+  animation:shimmer 1.4s infinite linear;
+}
+[data-theme="dark"] .skel{
+  background:linear-gradient(90deg,#393939 25%,#4a4a4a 50%,#393939 75%);
+  background-size:800px 100%;
+}
+
+/* ── Fetch-failure notification — centred modal ── */
+.fetch-fail-overlay{display:none;position:fixed;inset:0;background:rgba(22,22,22,.6);z-index:9500;align-items:center;justify-content:center;padding:24px;}
 .fetch-fail-overlay.open{display:flex;}
 .fetch-fail-banner{
   background:var(--cds-layer-01);border-top:3px solid #fa4d56;
-  width:min(520px,calc(100% - 32px));
-  padding:20px 22px 18px;
-  box-shadow:0 -4px 20px rgba(0,0,0,.25);
-  display:flex;flex-direction:column;gap:10px;
+  width:min(480px,calc(100% - 32px));
+  padding:24px 26px 20px;
+  box-shadow:0 8px 32px rgba(0,0,0,.35);
+  display:flex;flex-direction:column;gap:12px;
 }
 .fetch-fail-banner__head{display:flex;align-items:center;gap:10px;}
-.fetch-fail-banner__icon{width:18px;height:18px;border-radius:50%;background:#fa4d56;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;line-height:1;}
-.fetch-fail-banner__title{font-size:14px;font-weight:600;color:var(--cds-text-primary);}
+.fetch-fail-banner__icon{width:20px;height:20px;border-radius:50%;background:#fa4d56;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;line-height:1;}
+.fetch-fail-banner__title{font-size:15px;font-weight:600;color:var(--cds-text-primary);}
 .fetch-fail-banner__body{font-size:13px;line-height:20px;color:var(--cds-text-secondary);}
-.fetch-fail-banner__last{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--cds-text-placeholder);margin-top:2px;}
+.fetch-fail-banner__reason{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#fa4d56;background:rgba(250,77,86,.08);padding:6px 10px;word-break:break-all;}
+.fetch-fail-banner__last{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--cds-text-placeholder);}
 .fetch-fail-banner__countdown{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--cds-text-placeholder);}
 .fetch-fail-banner__actions{display:flex;gap:10px;align-items:center;margin-top:4px;}
 .fetch-fail-btn-ok{
@@ -350,16 +364,6 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
   font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;
 }
 .fetch-fail-btn-ok:hover{background:#0050e6;}
-.fetch-fail-btn-retry{
-  height:32px;padding:0 14px;
-  background:transparent;color:var(--cds-link-primary);border:1px solid var(--cds-border-subtle-01);
-  font-family:'IBM Plex Sans',sans-serif;font-size:13px;cursor:pointer;
-}
-.fetch-fail-btn-retry:hover{background:var(--cds-layer-02);}
-@media(max-width:480px){
-  .fetch-fail-overlay{padding:0;}
-  .fetch-fail-banner{width:100%;border-left:none;border-right:none;}
-}
 </style>
 </head>
 <body>
@@ -389,11 +393,11 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
   <div class="summary-panel">
     <div class="summary-panel__title">Ecosystem overview</div>
     <div class="summary-row">
-      <div class="summary-tile"><div class="label">Packages live</div><div class="value">7</div></div>
-      <div class="summary-tile"><div class="label">Total all-time</div><div class="value" id="sumAllTime">93.9k</div></div>
-      <div class="summary-tile"><div class="label">Last 30 days</div><div class="value" id="sumDay">47,122</div></div>
-      <div class="summary-tile"><div class="label">Snapshot date</div><div class="value small">Jul 27, 2026</div></div>
-      <div class="summary-tile"><div class="label">Data source</div><div class="value small">pepy.tech · VS Code Marketplace</div></div>
+      <div class="summary-tile"><div class="label">Packages tracked</div><div class="value">6</div></div>
+      <div class="summary-tile"><div class="label">Total all-time</div><div class="value" id="sumAllTime"><span class="skel" style="width:60px"></span></div></div>
+      <div class="summary-tile"><div class="label">Last 30 days</div><div class="value" id="sumDay"><span class="skel" style="width:60px"></span></div></div>
+      <div class="summary-tile"><div class="label">Last updated</div><div class="value small" id="sumDate">fetching…</div></div>
+      <div class="summary-tile"><div class="label">Data source</div><div class="value small">pepy.tech via /api/stats</div></div>
     </div>
   </div>
 
@@ -417,14 +421,14 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
       <div class="fetch-fail-banner__icon">!</div>
       <div class="fetch-fail-banner__title">Data fetch failed</div>
     </div>
-    <div class="fetch-fail-banner__body" id="fetchFailMsg">
-      Could not reach pepy.tech or any fallback source. Showing the last known numbers below.
+    <div class="fetch-fail-banner__body">
+      Could not load stats from <code>/api/stats</code>. The numbers below are from the last successful fetch.
     </div>
+    <div class="fetch-fail-banner__reason" id="fetchFailReason" style="display:none"></div>
     <div class="fetch-fail-banner__last" id="fetchFailLast"></div>
     <div class="fetch-fail-banner__countdown" id="fetchFailCountdown"></div>
     <div class="fetch-fail-banner__actions">
       <button class="fetch-fail-btn-ok" id="fetchFailOk">OK, got it</button>
-      <button class="fetch-fail-btn-retry" id="fetchFailRetry">↻ Retry now</button>
     </div>
   </div>
 </div>
@@ -469,13 +473,13 @@ const PACKAGES = [
     license: "—",
     // Real numbers from pepy.tech as of Jul 28, 2025
     snapshot: {
-      allTime: 55392, month: 41711, day: 4441, perSec: "0.051/s",
-      note: "55,392 total · 41,711 last 30d · pepy.tech Jul 27",
+      allTime: 68362, month: 53132, day: 2823, perSec: "0.033/s",
+      note: "68,362 total · 53,132 last 30d · pepy.tech Jul 31",
       weekly: [
-        {date:"2025-05-05",v:1800},{date:"2025-05-12",v:2100},{date:"2025-05-19",v:2400},
-        {date:"2025-05-26",v:2200},{date:"2025-06-02",v:3100},{date:"2025-06-09",v:3400},
-        {date:"2025-06-16",v:3200},{date:"2025-06-23",v:3800},{date:"2025-06-30",v:4100},
-        {date:"2025-07-07",v:4300},{date:"2025-07-14",v:4600},{date:"2025-07-21",v:5200}
+        {date:"2026-06-08",v:1034},{date:"2026-06-15",v:1730},{date:"2026-06-22",v:4380},
+        {date:"2026-06-29",v:2631},{date:"2026-07-06",v:2963},{date:"2026-07-13",v:3800},
+        {date:"2026-07-17",v:2471},{date:"2026-07-22",v:4122},{date:"2026-07-28",v:5936},
+        {date:"2026-07-29",v:4211},{date:"2026-07-30",v:2823}
       ]
     }
   },
@@ -488,13 +492,13 @@ const PACKAGES = [
     version: "1.0.0",
     license: "MIT",
     snapshot: {
-      allTime: 32440, month: 3016, day: 170, perSec: "0.0020/s",
-      note: "32,440 total · 3,016 last 30d · pepy.tech Jul 27",
+      allTime: 32599, month: 2983, day: 61, perSec: "0.00071/s",
+      note: "32,599 total · 2,983 last 30d · pepy.tech Jul 31",
       weekly: [
-        {date:"2025-05-05",v:820},{date:"2025-05-12",v:890},{date:"2025-05-19",v:760},
-        {date:"2025-05-26",v:840},{date:"2025-06-02",v:910},{date:"2025-06-09",v:780},
-        {date:"2025-06-16",v:860},{date:"2025-06-23",v:720},{date:"2025-06-30",v:800},
-        {date:"2025-07-07",v:850},{date:"2025-07-14",v:740},{date:"2025-07-21",v:680}
+        {date:"2026-06-01",v:256},{date:"2026-06-08",v:185},{date:"2026-06-15",v:163},
+        {date:"2026-06-22",v:210},{date:"2026-06-29",v:191},{date:"2026-07-06",v:265},
+        {date:"2026-07-13",v:318},{date:"2026-07-20",v:152},{date:"2026-07-27",v:170},
+        {date:"2026-07-29",v:47},{date:"2026-07-30",v:61}
       ]
     }
   },
@@ -507,13 +511,14 @@ const PACKAGES = [
     version: "0.2.0",
     license: "—",
     snapshot: {
-      allTime: 1410, month: 1410, day: 271, perSec: "0.0031/s",
-      note: "1,410 total · 1,410 last 30d · pepy.tech Jul 27",
+      allTime: 1477, month: 1477, day: 7, perSec: "0.000081/s",
+      note: "1,477 total · 1,477 last 30d · pepy.tech Jul 31",
       weekly: [
-        {date:"2025-05-05",v:22},{date:"2025-05-12",v:18},{date:"2025-05-19",v:15},
-        {date:"2025-05-26",v:12},{date:"2025-06-02",v:10},{date:"2025-06-09",v:8},
-        {date:"2025-06-16",v:6},{date:"2025-06-23",v:5},{date:"2025-06-30",v:4},
-        {date:"2025-07-07",v:3},{date:"2025-07-14",v:2},{date:"2025-07-21",v:1}
+        {date:"2026-07-09",v:381},{date:"2026-07-10",v:322},{date:"2026-07-11",v:48},
+        {date:"2026-07-12",v:25},{date:"2026-07-13",v:12},{date:"2026-07-14",v:25},
+        {date:"2026-07-15",v:19},{date:"2026-07-16",v:34},{date:"2026-07-17",v:14},
+        {date:"2026-07-23",v:55},{date:"2026-07-24",v:198},{date:"2026-07-27",v:271},
+        {date:"2026-07-28",v:44},{date:"2026-07-30",v:7}
       ]
     }
   },
@@ -527,12 +532,13 @@ const PACKAGES = [
     license: "—",
     snapshot: {
       allTime: 3115, month: 241, day: 5, perSec: "0.000058/s",
-      note: "3,115 total · 241 last 30d · pepy.tech Jul 27",
+      note: "3,115 total · 241 last 30d · pepy.tech Jul 31",
       weekly: [
-        {date:"2025-05-05",v:55},{date:"2025-05-12",v:62},{date:"2025-05-19",v:58},
-        {date:"2025-05-26",v:70},{date:"2025-06-02",v:65},{date:"2025-06-09",v:72},
-        {date:"2025-06-16",v:68},{date:"2025-06-23",v:80},{date:"2025-06-30",v:75},
-        {date:"2025-07-07",v:78},{date:"2025-07-14",v:82},{date:"2025-07-21",v:85}
+        {date:"2026-06-01",v:18},{date:"2026-06-05",v:174},{date:"2026-06-06",v:76},
+        {date:"2026-06-12",v:18},{date:"2026-06-14",v:27},{date:"2026-06-17",v:17},
+        {date:"2026-06-24",v:20},{date:"2026-06-30",v:20},{date:"2026-07-06",v:18},
+        {date:"2026-07-10",v:18},{date:"2026-07-14",v:13},{date:"2026-07-16",v:11},
+        {date:"2026-07-27",v:5}
       ]
     }
   },
@@ -545,13 +551,13 @@ const PACKAGES = [
     version: "0.*",
     license: "—",
     snapshot: {
-      allTime: 815, month: 399, day: 23, perSec: "0.00027/s",
-      note: "815 total · 399 last 30d · pepy.tech Jul 27",
+      allTime: 1762, month: 1317, day: 541, perSec: "0.0063/s",
+      note: "1,762 total · 1,317 last 30d · pepy.tech Jul 31",
       weekly: [
-        {date:"2025-05-05",v:40},{date:"2025-05-12",v:55},{date:"2025-05-19",v:62},
-        {date:"2025-05-26",v:70},{date:"2025-06-02",v:75},{date:"2025-06-09",v:80},
-        {date:"2025-06-16",v:85},{date:"2025-06-23",v:90},{date:"2025-06-30",v:88},
-        {date:"2025-07-07",v:75},{date:"2025-07-14",v:65},{date:"2025-07-21",v:30}
+        {date:"2026-06-24",v:362},{date:"2026-06-30",v:16},{date:"2026-07-03",v:26},
+        {date:"2026-07-07",v:13},{date:"2026-07-10",v:28},{date:"2026-07-12",v:38},
+        {date:"2026-07-13",v:52},{date:"2026-07-16",v:21},{date:"2026-07-23",v:16},
+        {date:"2026-07-27",v:23},{date:"2026-07-29",v:403},{date:"2026-07-30",v:541}
       ]
     }
   },
@@ -564,13 +570,13 @@ const PACKAGES = [
     version: "0.*",
     license: "—",
     snapshot: {
-      allTime: 689, month: 345, day: 18, perSec: "0.00021/s",
-      note: "689 total · 345 last 30d · pepy.tech Jul 27",
+      allTime: 705, month: 355, day: 16, perSec: "0.000185/s",
+      note: "705 total · 355 last 30d · pepy.tech Jul 31",
       weekly: [
-        {date:"2025-05-05",v:30},{date:"2025-05-12",v:42},{date:"2025-05-19",v:50},
-        {date:"2025-05-26",v:58},{date:"2025-06-02",v:62},{date:"2025-06-09",v:68},
-        {date:"2025-06-16",v:72},{date:"2025-06-23",v:75},{date:"2025-06-30",v:70},
-        {date:"2025-07-07",v:65},{date:"2025-07-14",v:55},{date:"2025-07-21",v:42}
+        {date:"2026-06-16",v:253},{date:"2026-06-17",v:33},{date:"2026-06-23",v:10},
+        {date:"2026-06-29",v:9},{date:"2026-07-03",v:8},{date:"2026-07-09",v:97},
+        {date:"2026-07-10",v:42},{date:"2026-07-16",v:17},{date:"2026-07-20",v:25},
+        {date:"2026-07-21",v:21},{date:"2026-07-27",v:18},{date:"2026-07-28",v:16}
       ]
     }
   }
@@ -659,43 +665,47 @@ const STATS_API_URL = '/api/stats';
 const AUTO_REFRESH_MS = 60 * 60 * 1000;       // 1 hour
 let autoRefreshTimer = null;
 let lastHitTime = null;           // ISO string of most recent successful API hit
-let dataJsonFetchedAt = null;     // ISO timestamp from last api response
-const PEPY_BASE = 'https://pepy.tech/api/v2/projects/';
+let dataJsonFetchedAt = null;
 let fetchFailCountdownTimer = null;
-let fetchFailRetryAt = null;      // Date when the next auto-retry fires
+let fetchFailRetryAt = null;
 
 // ---------------------------------------------------------------------------
-// Fetch-failure banner helpers
+// Fetch-failure banner — centered, shows server error reason + countdown
 // ---------------------------------------------------------------------------
-function showFetchFail(retryMs){
-  const overlay   = document.getElementById('fetchFailOverlay');
-  const lastEl    = document.getElementById('fetchFailLast');
-  const countEl   = document.getElementById('fetchFailCountdown');
+function showFetchFail(retryMs, reason){
+  const overlay  = document.getElementById('fetchFailOverlay');
+  const lastEl   = document.getElementById('fetchFailLast');
+  const countEl  = document.getElementById('fetchFailCountdown');
+  const reasonEl = document.getElementById('fetchFailReason');
 
-  // Show the last numbers we do have
   if(lastHitTime){
     const d = new Date(lastHitTime);
-    const ts = d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    lastEl.textContent = 'Last successful fetch: ' + ts;
+    const ts = d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    lastEl.textContent = 'Last successful fetch: ' + ts + ' · auto-retries every hour';
   } else {
-    lastEl.textContent = 'No previous fetch recorded — showing snapshot data.';
+    lastEl.textContent = 'No data fetched yet — will auto-retry in ' + Math.round(retryMs/60000) + ' min';
+  }
+
+  if(reason){
+    reasonEl.textContent = reason;
+    reasonEl.style.display = '';
+  } else {
+    reasonEl.style.display = 'none';
   }
 
   fetchFailRetryAt = new Date(Date.now() + retryMs);
   overlay.classList.add('open');
 
-  // Tick the countdown every second
   clearInterval(fetchFailCountdownTimer);
   fetchFailCountdownTimer = setInterval(() => {
     const secLeft = Math.max(0, Math.round((fetchFailRetryAt - Date.now()) / 1000));
     if(secLeft <= 0){
       clearInterval(fetchFailCountdownTimer);
-      countEl.textContent = 'Retrying…';
+      countEl.textContent = 'Retrying now…';
     } else {
       const m = Math.floor(secLeft / 60);
       const s = secLeft % 60;
-      const label = m > 0 ? `${m}m ${s}s` : `${s}s`;
-      countEl.textContent = `Auto-retry in ${label}`;
+      countEl.textContent = `Next auto-retry in ${m > 0 ? m+'m ' : ''}${s}s`;
     }
   }, 1000);
 }
@@ -1094,139 +1104,71 @@ function setStats(pkg, allTime, month, day, perSec){
   if(ps) ps.textContent = perSec;
 }
 
-// ---- Phase 1: instant snapshot paint (called synchronously at boot) ----
+// ---- Boot paint: show real snapshot numbers + skeleton shimmer on stat cells ----
 function paintSnapshot(p){
   const snap = p.snapshot;
+  // Paint real numbers as initial state — these are genuine last-known data
   setStats(p.pkg, snap.allTime, snap.month, snap.day, snap.perSec);
   clearErrorChart(p.pkg);
-  // Use weekly series if available for the sparkline
   const series = (snap.weekly||[]).map(w => ({ date: w.date, downloads: w.v }));
   DATA[p.pkg] = { recent:{ last_day:snap.day, last_month:snap.month }, series, snapshot:true, snap };
-  if(series.length > 0){
-    clearErrorChart(p.pkg);
-    renderTimeChart(p.pkg, series);
-  } else {
-    renderSnapshotChart(p.pkg, snap);
-  }
+  if(series.length > 0) renderTimeChart(p.pkg, series);
+  else renderSnapshotChart(p.pkg, snap);
   const badge = document.getElementById('snapbadge-' + p.pkg);
-  if(badge) badge.textContent = snap.note;
-  // show version/license in foot if available
-  const footBadge = document.getElementById('snapbadge-' + p.pkg);
-  if(footBadge && p.version) footBadge.textContent = 'v' + p.version + (p.license && p.license !== '—' ? ' · ' + p.license : '') + ' · snapshot Jul 28';
+  if(badge) badge.textContent = 'last known · Jul 31 · updating…';
 }
 
 function paintAllSnapshots(){
   PACKAGES.forEach(paintSnapshot);
-  // summary totals already pre-filled in HTML — no-op to avoid flash
-}
-
-// ---- Phase 2: live refresh in background (non-blocking) ----
-async function refreshPackageLive(p){
-  // ── 1. Try pepy.tech authenticated API (richer daily series + all-time) ──
-  let pepyOk = false;
-  let allTime = p.snapshot.allTime;
-  let day = p.snapshot.day;
-  let month = p.snapshot.month;
-
-  try{
-    const pepyData = await fetchPepy(p.pkg);
-    allTime = pepyData.total_downloads || allTime;
-    const series = peypDataToSeries(pepyData);
-
-    // Derive last-30d and last-24h from the daily series
-    if(series.length){
-      const sorted = series.slice().sort((a,b) => b.date.localeCompare(a.date));
-      day   = sorted[0]?.downloads ?? day;
-      month = sorted.slice(0,30).reduce((s,d)=>s+d.downloads,0) || month;
-      clearErrorChart(p.pkg);
-      DATA[p.pkg] = {
-        recent: { last_day: day, last_month: month },
-        series, snapshot: false, snap: p.snapshot
-      };
-      renderTimeChart(p.pkg, series);
-    } else {
-      DATA[p.pkg] = { recent:{ last_day:day, last_month:month }, series:[], snapshot:false, snap:p.snapshot };
-    }
-    pepyOk = true;
-  }catch(pepyErr){
-    // pepy.tech failed (CORS or auth) — fall back to pypistats.org
-  }
-
-  // ── 2. Fallback: pypistats.org (no auth, proxy-friendly) ──
-  if(!pepyOk){
-    try{
-      const recent = await fetchJSONWithFallback(`https://pypistats.org/api/packages/${p.pkg}/recent`);
-      day   = recent.data.last_day;
-      month = recent.data.last_month;
-      try{
-        const ov = await fetchJSONWithFallback(`https://pypistats.org/api/packages/${p.pkg}/overall?mirrors=false`);
-        const series = ov.data
-          .filter(d => d.category === 'without_mirrors' || d.category === 'Total')
-          .sort((a,b) => new Date(a.date) - new Date(b.date));
-        allTime = series.reduce((s,d)=>s+(d.downloads||0),0) || allTime;
-        clearErrorChart(p.pkg);
-        DATA[p.pkg] = { recent: recent.data, series, snapshot:false, snap: p.snapshot };
-        renderTimeChart(p.pkg, series.length ? series : [{date:'',downloads:0}]);
-      }catch(e){
-        DATA[p.pkg] = { recent: recent.data, series:[], snapshot:false, snap: p.snapshot };
-      }
-    }catch(e){
-      return { ok:false, allTime: p.snapshot.allTime||0, day: p.snapshot.day, month: p.snapshot.month };
-    }
-  }
-
-  const perSec = (day / 86400) < 0.01 ? '<0.01/s' : (day / 86400).toFixed(5) + '/s';
-  setStats(p.pkg, allTime, month, day, perSec);
-  // hide snapshot badge — we have live data
-  const tag = document.getElementById('snaptag-' + p.pkg);
-  if(tag) tag.style.display = 'none';
-  const badge = document.getElementById('snapbadge-' + p.pkg);
-  if(badge) badge.textContent = pepyOk ? 'pepy.tech live' : '';
-  return { ok:true, allTime, day, month, pepyOk };
+  // Show real totals in summary while API loads
+  const sumAT = PACKAGES.reduce((s,p) => s + p.snapshot.allTime, 0);
+  const sumM  = PACKAGES.reduce((s,p) => s + p.snapshot.month, 0);
+  document.getElementById('sumAllTime').textContent = fmtK(sumAT);
+  document.getElementById('sumDay').textContent = fmt(sumM);
+  document.getElementById('sumDate').textContent = 'last known · Jul 31 · updating…';
 }
 
 // ---------------------------------------------------------------------------
-// loadFromApi — calls the Vercel /api/stats serverless function.
-// Returns true if the response was valid and all packages painted.
+// loadFromApi — sole data source: Vercel /api/stats
 // ---------------------------------------------------------------------------
 async function loadFromApi(){
   const t0 = performance.now();
   console.log('[db2-dash] GET /api/stats …');
   try{
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 10000);
+    const timer = setTimeout(() => ctrl.abort(), 15000);
     const res = await fetch(STATS_API_URL + '?t=' + Date.now(), { signal: ctrl.signal });
     clearTimeout(timer);
     const elapsed = (performance.now() - t0).toFixed(0);
+
+    // Surface the server-side error message for debugging
     if(!res.ok){
-      console.warn(`[db2-dash] /api/stats → HTTP ${res.status} (${elapsed}ms)`);
-      return false;
+      let reason = `HTTP ${res.status}`;
+      try{ const j = await res.json(); reason = j.error || reason; }catch(_){}
+      console.warn(`[db2-dash] /api/stats → ${reason} (${elapsed}ms)`);
+      return { ok: false, reason };
     }
+
     const payload = await res.json();
     if(!payload?.packages){
-      console.warn(`[db2-dash] /api/stats → unexpected payload shape (${elapsed}ms)`, payload);
-      return false;
+      console.warn(`[db2-dash] /api/stats → unexpected shape (${elapsed}ms)`, payload);
+      return { ok: false, reason: 'unexpected response shape' };
     }
-    const pkgCount = Object.keys(payload.packages).length;
-    console.log(`[db2-dash] /api/stats → OK ${pkgCount} packages in ${elapsed}ms (fetched_at: ${payload.fetched_at})`);
 
+    const pkgCount = Object.keys(payload.packages).length;
+    console.log(`[db2-dash] /api/stats → OK ${pkgCount} pkgs in ${elapsed}ms  fetched_at=${payload.fetched_at}`);
     lastHitTime = payload.fetched_at || new Date().toISOString();
 
-    let sumAT = 0, sumM = 0;
-    let hitCount = 0;
+    let sumAT = 0, sumM = 0, hitCount = 0;
     for(const p of PACKAGES){
       const d = payload.packages[p.pkg];
-      if(!d){
-        console.warn(`[db2-dash]   missing: ${p.pkg}`);
-        continue;
-      }
+      if(!d){ console.warn(`[db2-dash]   missing: ${p.pkg}`); continue; }
       hitCount++;
       const { total_downloads: allTime, last_month: month, last_day: day, series } = d;
-      console.log(`[db2-dash]   ${p.pkg}: total=${allTime?.toLocaleString()} 30d=${month?.toLocaleString()} 1d=${day} series=${series?.length}pts`);
+      console.log(`[db2-dash]   ${p.pkg}: total=${allTime?.toLocaleString()}  30d=${month?.toLocaleString()}  1d=${day}  series=${series?.length}pts`);
       sumAT += allTime || 0;
       sumM  += month  || 0;
-      const perSec = day > 0 ? (day / 86400).toFixed(5) + '/s' : '0/s';
-      setStats(p.pkg, allTime, month, day, perSec);
+      setStats(p.pkg, allTime, month, day, day > 0 ? (day/86400).toFixed(5)+'/s' : '0/s');
       const tag = document.getElementById('snaptag-' + p.pkg);
       if(tag) tag.style.display = 'none';
       const badge = document.getElementById('snapbadge-' + p.pkg);
@@ -1236,86 +1178,51 @@ async function loadFromApi(){
       DATA[p.pkg] = { recent:{ last_day:day, last_month:month }, series:cleanSeries, snapshot:false, snap:p.snapshot };
       if(cleanSeries.length > 0) renderTimeChart(p.pkg, cleanSeries);
     }
-    if(hitCount === 0){
-      console.warn('[db2-dash] /api/stats → 0 packages matched — falling back');
-      return false;
-    }
+    if(hitCount === 0){ console.warn('[db2-dash]   0 packages matched'); return { ok:false, reason:'0 packages in response' }; }
 
-    // Update summary tiles
     document.getElementById('sumAllTime').textContent = fmtK(sumAT);
     document.getElementById('sumDay').textContent = fmt(sumM);
-
-    // Status
-    document.getElementById('statusDot').className = 'status-dot';
     const d = new Date(lastHitTime);
-    const timeStr = d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const ts = d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('sumDate').textContent = `updated ${ts}`;
+    document.getElementById('statusDot').className = 'status-dot';
     document.getElementById('statusText').textContent = 'live · hourly';
-    document.getElementById('lastUpdated').textContent = `updated ${timeStr}`;
-    return true;
+    document.getElementById('lastUpdated').textContent = `updated ${ts}`;
+    return { ok: true };
   }catch(e){
     const elapsed = (performance.now() - t0).toFixed(0);
     console.error(`[db2-dash] /api/stats → FAILED after ${elapsed}ms:`, e.message);
-    return false;
+    return { ok: false, reason: e.message };
   }
 }
 
 async function loadAll(){
-  usingRelay = false;
   console.log('[db2-dash] loadAll triggered');
   document.getElementById('statusText').textContent = 'fetching…';
   document.getElementById('statusDot').className = 'status-dot wait';
   document.getElementById('lastUpdated').textContent = '';
-
-  // Reset auto-refresh timer each manual/auto trigger
   clearTimeout(autoRefreshTimer);
 
-  // ── Priority 1: /api/stats (Vercel serverless function) ──
-  const gotApi = await loadFromApi();
-  if(gotApi){
+  const result = await loadFromApi();
+  if(result.ok){
     hideFetchFail();
     console.log(`[db2-dash] next auto-refresh in ${AUTO_REFRESH_MS/60000}min`);
     autoRefreshTimer = setTimeout(loadAll, AUTO_REFRESH_MS);
     return;
   }
 
-  // ── Priority 2 & 3: direct pepy.tech + pypistats fallback ──
-  console.warn('[db2-dash] /api/stats failed — trying direct pepy.tech / pypistats fallback');
-  const promises = PACKAGES.map(p => refreshPackageLive(p));
-  Promise.all(promises).then(results => {
-    const liveCount  = results.filter(r => r.ok).length;
-    const pepyCount  = results.filter(r => r.pepyOk).length;
-    console.log(`[db2-dash] fallback: ${liveCount}/${PACKAGES.length} ok, ${pepyCount} via pepy.tech`);
-
-    if(liveCount > 0){
-      const sumAT = results.reduce((s,r) => s+(r.allTime||0),0);
-      const sumM  = results.reduce((s,r) => s+(r.month||0),0);
-      document.getElementById('sumAllTime').textContent = fmtK(sumAT);
-      document.getElementById('sumDay').textContent = fmt(sumM);
-    }
-
-    if(liveCount === PACKAGES.length){
-      document.getElementById('statusDot').className = 'status-dot';
-      const src = pepyCount > 0 ? `live · pepy.tech (${pepyCount}/${PACKAGES.length})` : (usingRelay ? 'live · relay' : 'live · pypistats.org');
-      document.getElementById('statusText').textContent = src;
-      hideFetchFail();
-    } else if(liveCount > 0){
-      document.getElementById('statusDot').className = 'status-dot wait';
-      document.getElementById('statusText').textContent = `live ${liveCount}/${PACKAGES.length} · snapshot rest`;
-      hideFetchFail();
-    } else {
-      console.error('[db2-dash] all sources failed — showing failure banner');
-      document.getElementById('statusDot').className = 'status-dot err';
-      document.getElementById('statusText').textContent = 'fetch failed';
-      showFetchFail(AUTO_REFRESH_MS);
-    }
-
-    const displayHit = lastHitTime ? fmtHitTime(lastHitTime) : '';
-    const wallClock  = new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    document.getElementById('lastUpdated').textContent = displayHit || wallClock;
-
-    console.log(`[db2-dash] next auto-refresh in ${AUTO_REFRESH_MS/60000}min`);
-    autoRefreshTimer = setTimeout(loadAll, AUTO_REFRESH_MS);
-  });
+  // Failed — show banner with exact reason, keep last-known numbers visible
+  console.error(`[db2-dash] fetch failed: ${result.reason} — showing banner, numbers remain last-known`);
+  document.getElementById('statusDot').className = 'status-dot err';
+  document.getElementById('statusText').textContent = 'fetch failed';
+  if(lastHitTime){
+    const d = new Date(lastHitTime);
+    const ts = d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('lastUpdated').textContent = `last known ${ts}`;
+  }
+  showFetchFail(AUTO_REFRESH_MS, result.reason);
+  console.log(`[db2-dash] next auto-retry in ${AUTO_REFRESH_MS/60000}min`);
+  autoRefreshTimer = setTimeout(loadAll, AUTO_REFRESH_MS);
 }
 
 // ---- Modal chart ----
@@ -1445,14 +1352,8 @@ document.getElementById('modalBg').addEventListener('click', e => { if(e.target.
 document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
 document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
-// fetch-failure banner buttons
+// fetch-failure banner
 document.getElementById('fetchFailOk').addEventListener('click', hideFetchFail);
-document.getElementById('fetchFailRetry').addEventListener('click', () => {
-  hideFetchFail();
-  clearTimeout(autoRefreshTimer);
-  loadAll();
-});
-// clicking the backdrop also dismisses
 document.getElementById('fetchFailOverlay').addEventListener('click', e => {
   if(e.target.id === 'fetchFailOverlay') hideFetchFail();
 });
@@ -1468,7 +1369,7 @@ function toggleTheme(){
   }
 }
 
-// boot — Phase 1: render DOM + paint snapshots instantly (synchronous)
+// boot — render cards with real last-known numbers, then fetch live
 const grid = document.getElementById('grid');
 PACKAGES.forEach(p => grid.appendChild(buildCard(p)));
 const vscodeGrid = document.getElementById('vscodeGrid');
@@ -1477,9 +1378,8 @@ const roadmapGrid = document.getElementById('roadmapGrid');
 ROADMAP.forEach(r => roadmapGrid.appendChild(buildRoadmapTile(r)));
 const ecosystemGrid = document.getElementById('ecosystemGrid');
 ECOSYSTEM.forEach(r => ecosystemGrid.appendChild(buildRoadmapTile(r)));
-paintAllSnapshots();
-// Phase 2: attempt live refresh in background after first paint
-setTimeout(() => { loadAll(); refreshVscodeExtensions(); }, 0);
+paintAllSnapshots();   // shows real Jul-31 numbers immediately
+setTimeout(() => { loadAll(); refreshVscodeExtensions(); }, 0);  // live fetch starts after first paint
 </script>
 </body>
 </html>

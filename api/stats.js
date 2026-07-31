@@ -52,29 +52,46 @@ function processPackage(d) {
 }
 
 export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=600");
+
   const key = process.env.PEPY_API_KEY;
   if (!key) {
-    return res.status(500).json({ error: "PEPY_API_KEY not configured" });
+    console.error("[api/stats] PEPY_API_KEY env var is not set");
+    return res.status(500).json({ error: "PEPY_API_KEY env var is not set — add it in Vercel → Settings → Environment Variables" });
   }
 
+  console.log(`[api/stats] fetching ${PACKAGES.length} packages…`);
   const results = await Promise.allSettled(
     PACKAGES.map(async (pkg) => {
-      const d = await fetchPepy(pkg, key);
-      return { pkg, data: processPackage(d) };
+      try {
+        const d = await fetchPepy(pkg, key);
+        const data = processPackage(d);
+        console.log(`[api/stats]   ${pkg}: total=${data.total_downloads} 30d=${data.last_month} 1d=${data.last_day}`);
+        return { pkg, data };
+      } catch (err) {
+        console.error(`[api/stats]   ${pkg}: FAILED — ${err.message}`);
+        throw err;
+      }
     })
   );
 
   const packages = {};
+  const failed = [];
   for (const r of results) {
     if (r.status === "fulfilled") {
       packages[r.value.pkg] = r.value.data;
+    } else {
+      failed.push(r.reason?.message || "unknown");
     }
   }
 
-  // Cache at Vercel CDN edge for 1 hour — serves stale while revalidating
-  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=600");
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  if (Object.keys(packages).length === 0) {
+    console.error("[api/stats] all packages failed:", failed);
+    return res.status(500).json({ error: "all pepy.tech fetches failed", details: failed });
+  }
 
+  console.log(`[api/stats] done — ${Object.keys(packages).length}/${PACKAGES.length} packages OK`);
   return res.status(200).json({
     fetched_at: new Date().toISOString(),
     packages,
