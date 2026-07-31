@@ -1,9 +1,9 @@
 /**
- * Vercel Serverless Function — /api/stats
+ * Vercel Serverless Function -- /api/stats
  * Fetches pepy.tech for all Db2 connector packages and returns JSON.
  *
- * Environment variables (Vercel → Settings → Environment Variables):
- *   PEPY_API_KEY  — pepy.tech API key
+ * Environment variables (Vercel -> Settings -> Environment Variables):
+ *   PEPY_API_KEY  -- pepy.tech API key
  */
 
 const PEPY_BASE = "https://pepy.tech/api/v2/projects/";
@@ -28,7 +28,7 @@ async function fetchPepy(pkg, key) {
     clearTimeout(timer);
     if (!res.ok) {
       const body = await res.text().catch(() => "");
-      throw new Error(`HTTP ${res.status}${body ? ": " + body.slice(0, 120) : ""}`);
+      throw new Error("HTTP " + res.status + (body ? ": " + body.slice(0, 120) : ""));
     }
     return res.json();
   } catch (err) {
@@ -66,11 +66,11 @@ export default async function handler(req, res) {
     console.error("[api/stats] PEPY_API_KEY env var is not set");
     return res.status(500).json({
       error: "PEPY_API_KEY env var is not set",
-      hint: "Add it in Vercel → Settings → Environment Variables, then redeploy",
+      hint: "Add it in Vercel -> Settings -> Environment Variables, then redeploy",
     });
   }
 
-  console.log(`[api/stats] fetching ${PACKAGES.length} packages  key=****${key.slice(-4)}`);
+  console.log("[api/stats] fetching " + PACKAGES.length + " packages  key=****" + key.slice(-4));
 
   const results = await Promise.allSettled(
     PACKAGES.map(async (pkg) => {
@@ -78,10 +78,10 @@ export default async function handler(req, res) {
       try {
         const d = await fetchPepy(pkg, key);
         const data = processPackage(d);
-        console.log(`[api/stats]   OK  ${pkg}  total=${data.total_downloads}  30d=${data.last_month}  1d=${data.last_day}  (${Date.now()-t0}ms)`);
+        console.log("[api/stats]   OK  " + pkg + "  total=" + data.total_downloads + "  30d=" + data.last_month + "  1d=" + data.last_day + "  (" + (Date.now()-t0) + "ms)");
         return { pkg, data };
       } catch (err) {
-        console.error(`[api/stats]   ERR ${pkg}  ${err.message}  (${Date.now()-t0}ms)`);
+        console.error("[api/stats]   ERR " + pkg + "  " + err.message + "  (" + (Date.now()-t0) + "ms)");
         throw err;
       }
     })
@@ -98,7 +98,6 @@ export default async function handler(req, res) {
     }
   }
 
-  // Return partial success if at least one package loaded
   const okCount = Object.keys(packages).length;
   if (okCount === 0) {
     console.error("[api/stats] all packages failed:", errors);
@@ -109,12 +108,11 @@ export default async function handler(req, res) {
   }
 
   if (okCount < PACKAGES.length) {
-    console.warn(`[api/stats] partial: ${okCount}/${PACKAGES.length} ok, errors:`, errors);
+    console.warn("[api/stats] partial: " + okCount + "/" + PACKAGES.length + " ok");
   }
 
-  console.log(`[api/stats] done — ${okCount}/${PACKAGES.length} packages OK`);
+  console.log("[api/stats] done -- " + okCount + "/" + PACKAGES.length + " packages OK");
 
-  // Cache at CDN edge for 1 hour
   res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=600");
   return res.status(200).json({
     fetched_at: new Date().toISOString(),

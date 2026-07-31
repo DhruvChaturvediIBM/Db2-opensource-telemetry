@@ -1,5 +1,5 @@
 /**
- * Vercel diagnostic endpoint — /api/ping
+ * Vercel diagnostic endpoint - /api/ping
  * Checks: env var present, pepy.tech reachable, single package fetch.
  * Remove this file once the issue is resolved.
  */
@@ -43,13 +43,13 @@ export default async function handler(req, res) {
         "x-rate-limit-limit": r.headers.get("x-rate-limit-limit"),
         "content-type": r.headers.get("content-type"),
       },
-      body_preview: r.ok ? "(ok — " + body.length + " bytes)" : body.slice(0, 300),
+      body_preview: r.ok ? "(ok - " + body.length + " bytes)" : body.slice(0, 300),
     };
 
-    report.verdict = r.ok ? "OK" : `FAILED — HTTP ${r.status}`;
+    report.verdict = r.ok ? "OK" : `FAILED - HTTP ${r.status}`;
   } catch (err) {
     report.pepy_test = { error: err.message };
-    report.verdict = "FAILED — " + err.message;
+    report.verdict = "FAILED - " + err.message;
   }
 
   return res.status(200).json(report);
