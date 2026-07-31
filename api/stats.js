@@ -61,13 +61,20 @@ function processPackage(d) {
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
 
-  const key = process.env.PEPY_API_KEY;
+  const rawKey = process.env.PEPY_API_KEY || "";
+  // Strip any non-ASCII characters that may have been introduced by copy-paste
+  const key = rawKey.replace(/[^\x00-\x7F]/g, "").trim();
   if (!key) {
-    console.error("[api/stats] PEPY_API_KEY env var is not set");
+    console.error("[api/stats] PEPY_API_KEY env var is not set or contains only non-ASCII");
     return res.status(500).json({
       error: "PEPY_API_KEY env var is not set",
-      hint: "Add it in Vercel -> Settings -> Environment Variables, then redeploy",
+      raw_length: rawKey.length,
+      clean_length: key.length,
+      hint: "Delete and retype the key in Vercel -> Settings -> Environment Variables",
     });
+  }
+  if (rawKey.length !== key.length) {
+    console.warn("[api/stats] PEPY_API_KEY contained non-ASCII chars -- stripped. raw=" + rawKey.length + " clean=" + key.length);
   }
 
   console.log("[api/stats] v4 fetching " + PACKAGES.length + " packages  key=****" + key.slice(-4));
