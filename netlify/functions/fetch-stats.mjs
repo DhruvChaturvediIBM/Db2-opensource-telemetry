@@ -13,7 +13,10 @@ import { schedule } from "@netlify/functions";
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
-const PEPY_API_KEY = process.env.PEPY_API_KEY || "S2vTsHuUuWnpueCf7z0VedCpoFSKn7pD";
+const PEPY_API_KEY = process.env.PEPY_API_KEY;
+if (!PEPY_API_KEY) {
+  console.error("fetch-stats: PEPY_API_KEY env var is not set — aborting.");
+}
 const PEPY_BASE    = "https://pepy.tech/api/v2/projects/";
 
 const PACKAGES = [
