@@ -15,7 +15,6 @@
   ],
   "buildCommand": "echo build",
   "functions": {
-    "api/stats.js": { "maxDuration": 30 },
-    "api/ping.js":  { "maxDuration": 15 }
+    "api/stats.js": { "maxDuration": 30 }
   }
 }
