@@ -1,0 +1,16 @@
+{
+  "crons": [
+    { "path": "/api/stats", "schedule": "0 * * * *" }
+  ],
+  "rewrites": [
+    { "source": "/", "destination": "/public/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
+}

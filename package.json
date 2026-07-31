@@ -2,12 +2,8 @@
   "name": "db2-telemetry-dashboard",
   "version": "1.0.0",
   "private": true,
-  "description": "Db2 Ecosystem Download Telemetry — Netlify static site with hourly pepy.tech refresh",
-  "type": "module",
-  "scripts": {
-    "fetch": "node netlify/functions/fetch-stats.mjs"
-  },
-  "devDependencies": {
-    "@netlify/functions": "^2.8.1"
+  "description": "Db2 Ecosystem Download Telemetry — Vercel static site with hourly refresh",
+  "engines": {
+    "node": ">=18"
   }
 }

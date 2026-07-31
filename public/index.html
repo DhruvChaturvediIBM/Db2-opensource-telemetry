@@ -371,7 +371,6 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
     <div class="status-line"><span class="status-dot" id="statusDot"></span><span id="statusText">snapshot · Jul 27, 2026</span></div>
     <div class="status-line" id="lastUpdated"></div>
     <button class="cds-header-btn theme-toggle" id="themeToggle" title="Switch theme">☾</button>
-    <button class="cds-header-btn" id="refreshBtn">↻ Refresh</button>
   </div>
 </div>
 
@@ -650,20 +649,18 @@ const VSCODE_EXTENSIONS = [
 ];
 
 // ---------------------------------------------------------------------------
-// ---------------------------------------------------------------------------
 // Data sources (priority order):
-//   1. /data.json  — written hourly by the Netlify scheduled function
-//   2. pepy.tech authenticated API — direct browser call (CORS-permissive)
+//   1. /api/stats  — Vercel serverless function (server-side fetch, no CORS)
+//   2. pepy.tech   — direct browser call (CORS-permissive, no auth)
 //   3. pypistats.org via CORS proxies — last-resort fallback
 // ---------------------------------------------------------------------------
-const PEPY_API_KEY = window.__PEPY_API_KEY__ || '';
-const PEPY_BASE    = 'https://pepy.tech/api/v2/projects/';
-const DATA_JSON_URL = '/data.json';            // served by Netlify from public/
-// Poll interval — checks /data.json every hour (matches cron schedule)
+const STATS_API_URL = '/api/stats';
+// Poll interval — matches the Vercel cron schedule (top of every hour)
 const AUTO_REFRESH_MS = 60 * 60 * 1000;       // 1 hour
 let autoRefreshTimer = null;
 let lastHitTime = null;           // ISO string of most recent successful API hit
-let dataJsonFetchedAt = null;     // ISO timestamp from data.json payload
+let dataJsonFetchedAt = null;     // ISO timestamp from last api response
+const PEPY_BASE = 'https://pepy.tech/api/v2/projects/';
 let fetchFailCountdownTimer = null;
 let fetchFailRetryAt = null;      // Date when the next auto-retry fires
 
@@ -766,14 +763,12 @@ async function fetchJSONWithFallback(url){
 }
 
 // ---------------------------------------------------------------------------
-// pepy.tech authenticated fetch
+// pepy.tech unauthenticated fetch (browser fallback — server fn handles auth)
 //   GET https://pepy.tech/api/v2/projects/{pkg}
-//   Header: X-Api-Key: <key>
-//   Returns: { id, total_downloads, versions: { "<ver>": { <date>: N } } }
 // ---------------------------------------------------------------------------
 async function fetchPepy(pkg){
   const url = PEPY_BASE + pkg;
-  const data = await fetchWithTimeout(url, 8000, { 'X-Api-Key': PEPY_API_KEY });
+  const data = await fetchWithTimeout(url, 8000, {});
   lastHitTime = new Date().toISOString();
   return data;
 }
@@ -1191,34 +1186,43 @@ async function refreshPackageLive(p){
 }
 
 // ---------------------------------------------------------------------------
-// loadDataJson — try to load /data.json written by the Netlify scheduled fn.
-// Returns true if the file was fresh (< 90 min old) and all packages painted.
+// loadFromApi — calls the Vercel /api/stats serverless function.
+// Returns true if the response was valid and all packages painted.
 // ---------------------------------------------------------------------------
-async function loadDataJson(){
+async function loadFromApi(){
+  const t0 = performance.now();
+  console.log('[db2-dash] GET /api/stats …');
   try{
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 5000);
-    const res = await fetch(DATA_JSON_URL + '?t=' + Date.now(), { signal: ctrl.signal });
+    const timer = setTimeout(() => ctrl.abort(), 10000);
+    const res = await fetch(STATS_API_URL + '?t=' + Date.now(), { signal: ctrl.signal });
     clearTimeout(timer);
-    if(!res.ok) return false;
+    const elapsed = (performance.now() - t0).toFixed(0);
+    if(!res.ok){
+      console.warn(`[db2-dash] /api/stats → HTTP ${res.status} (${elapsed}ms)`);
+      return false;
+    }
     const payload = await res.json();
-    if(!payload?.packages) return false;
+    if(!payload?.packages){
+      console.warn(`[db2-dash] /api/stats → unexpected payload shape (${elapsed}ms)`, payload);
+      return false;
+    }
+    const pkgCount = Object.keys(payload.packages).length;
+    console.log(`[db2-dash] /api/stats → OK ${pkgCount} packages in ${elapsed}ms (fetched_at: ${payload.fetched_at})`);
 
-    // Check freshness — accept if fetched within the last 90 minutes
-    const fetchedAt = payload.fetched_at ? new Date(payload.fetched_at) : null;
-    const ageMin = fetchedAt ? (Date.now() - fetchedAt.getTime()) / 60000 : Infinity;
-    if(ageMin > 90) return false;   // stale — fall through to live fetch
-
-    dataJsonFetchedAt = payload.fetched_at;
-    lastHitTime = payload.fetched_at;
+    lastHitTime = payload.fetched_at || new Date().toISOString();
 
     let sumAT = 0, sumM = 0;
     let hitCount = 0;
     for(const p of PACKAGES){
       const d = payload.packages[p.pkg];
-      if(!d) continue;
+      if(!d){
+        console.warn(`[db2-dash]   missing: ${p.pkg}`);
+        continue;
+      }
       hitCount++;
       const { total_downloads: allTime, last_month: month, last_day: day, series } = d;
+      console.log(`[db2-dash]   ${p.pkg}: total=${allTime?.toLocaleString()} 30d=${month?.toLocaleString()} 1d=${day} series=${series?.length}pts`);
       sumAT += allTime || 0;
       sumM  += month  || 0;
       const perSec = day > 0 ? (day / 86400).toFixed(5) + '/s' : '0/s';
@@ -1226,13 +1230,16 @@ async function loadDataJson(){
       const tag = document.getElementById('snaptag-' + p.pkg);
       if(tag) tag.style.display = 'none';
       const badge = document.getElementById('snapbadge-' + p.pkg);
-      if(badge) badge.textContent = 'data.json · hourly';
+      if(badge) badge.textContent = 'live · hourly';
       clearErrorChart(p.pkg);
       const cleanSeries = (series||[]).map(s => ({ date: s.date, downloads: s.downloads }));
       DATA[p.pkg] = { recent:{ last_day:day, last_month:month }, series:cleanSeries, snapshot:false, snap:p.snapshot };
       if(cleanSeries.length > 0) renderTimeChart(p.pkg, cleanSeries);
     }
-    if(hitCount === 0) return false;
+    if(hitCount === 0){
+      console.warn('[db2-dash] /api/stats → 0 packages matched — falling back');
+      return false;
+    }
 
     // Update summary tiles
     document.getElementById('sumAllTime').textContent = fmtK(sumAT);
@@ -1240,18 +1247,21 @@ async function loadDataJson(){
 
     // Status
     document.getElementById('statusDot').className = 'status-dot';
-    const d = new Date(payload.fetched_at);
+    const d = new Date(lastHitTime);
     const timeStr = d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-    document.getElementById('statusText').textContent = `hourly · data.json`;
+    document.getElementById('statusText').textContent = 'live · hourly';
     document.getElementById('lastUpdated').textContent = `updated ${timeStr}`;
     return true;
   }catch(e){
+    const elapsed = (performance.now() - t0).toFixed(0);
+    console.error(`[db2-dash] /api/stats → FAILED after ${elapsed}ms:`, e.message);
     return false;
   }
 }
 
 async function loadAll(){
   usingRelay = false;
+  console.log('[db2-dash] loadAll triggered');
   document.getElementById('statusText').textContent = 'fetching…';
   document.getElementById('statusDot').className = 'status-dot wait';
   document.getElementById('lastUpdated').textContent = '';
@@ -1259,29 +1269,30 @@ async function loadAll(){
   // Reset auto-refresh timer each manual/auto trigger
   clearTimeout(autoRefreshTimer);
 
-  // ── Priority 1: /data.json (Netlify hourly cron output) ──
-  const gotDataJson = await loadDataJson();
-  if(gotDataJson){
-    // data.json was fresh — no need for direct API calls
+  // ── Priority 1: /api/stats (Vercel serverless function) ──
+  const gotApi = await loadFromApi();
+  if(gotApi){
+    hideFetchFail();
+    console.log(`[db2-dash] next auto-refresh in ${AUTO_REFRESH_MS/60000}min`);
     autoRefreshTimer = setTimeout(loadAll, AUTO_REFRESH_MS);
     return;
   }
 
   // ── Priority 2 & 3: direct pepy.tech + pypistats fallback ──
-  // Fire all live fetches in parallel — update each card as it resolves
+  console.warn('[db2-dash] /api/stats failed — trying direct pepy.tech / pypistats fallback');
   const promises = PACKAGES.map(p => refreshPackageLive(p));
   Promise.all(promises).then(results => {
     const liveCount  = results.filter(r => r.ok).length;
     const pepyCount  = results.filter(r => r.pepyOk).length;
+    console.log(`[db2-dash] fallback: ${liveCount}/${PACKAGES.length} ok, ${pepyCount} via pepy.tech`);
 
     if(liveCount > 0){
       const sumAT = results.reduce((s,r) => s+(r.allTime||0),0);
       const sumM  = results.reduce((s,r) => s+(r.month||0),0);
       document.getElementById('sumAllTime').textContent = fmtK(sumAT);
-      document.getElementById('sumDay').textContent = fmt(sumM);   // "Last 30 days" tile
+      document.getElementById('sumDay').textContent = fmt(sumM);
     }
 
-    // Status dot + text
     if(liveCount === PACKAGES.length){
       document.getElementById('statusDot').className = 'status-dot';
       const src = pepyCount > 0 ? `live · pepy.tech (${pepyCount}/${PACKAGES.length})` : (usingRelay ? 'live · relay' : 'live · pypistats.org');
@@ -1292,19 +1303,17 @@ async function loadAll(){
       document.getElementById('statusText').textContent = `live ${liveCount}/${PACKAGES.length} · snapshot rest`;
       hideFetchFail();
     } else {
-      // ── Total failure: no data source responded ──
+      console.error('[db2-dash] all sources failed — showing failure banner');
       document.getElementById('statusDot').className = 'status-dot err';
       document.getElementById('statusText').textContent = 'fetch failed';
-      const RETRY_MS = AUTO_REFRESH_MS;  // retry in 1 hour
-      showFetchFail(RETRY_MS);
+      showFetchFail(AUTO_REFRESH_MS);
     }
 
-    // Hit time: prefer the pepy.tech hit timestamp if available, else wall clock
     const displayHit = lastHitTime ? fmtHitTime(lastHitTime) : '';
     const wallClock  = new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
     document.getElementById('lastUpdated').textContent = displayHit || wallClock;
 
-    // Schedule next auto-refresh
+    console.log(`[db2-dash] next auto-refresh in ${AUTO_REFRESH_MS/60000}min`);
     autoRefreshTimer = setTimeout(loadAll, AUTO_REFRESH_MS);
   });
 }
@@ -1434,7 +1443,6 @@ function closeModal(){
 }
 document.getElementById('modalBg').addEventListener('click', e => { if(e.target.id==='modalBg') closeModal(); });
 document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
-document.getElementById('refreshBtn').addEventListener('click', () => { lastHitTime = null; hideFetchFail(); loadAll(); });
 document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
 // fetch-failure banner buttons
