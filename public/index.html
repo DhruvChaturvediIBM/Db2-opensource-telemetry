@@ -372,7 +372,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
   <div class="cds-header__name"><span class="prefix">IBM</span>Db2 — OpenSource Ecosystem</div>
   <div class="cds-header__route">OpenSource Ecosystem / Download Telemetry</div>
   <div class="cds-header__status">
-    <div class="status-line"><span class="status-dot" id="statusDot"></span><span id="statusText">snapshot · Jul 27, 2026</span></div>
+    <div class="status-line"><span class="status-dot" id="statusDot"></span><span id="statusText">loading…</span></div>
     <div class="status-line" id="lastUpdated"></div>
     <button class="cds-header-btn theme-toggle" id="themeToggle" title="Switch theme">☾</button>
   </div>
@@ -397,7 +397,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
       <div class="summary-tile"><div class="label">Total all-time</div><div class="value" id="sumAllTime"><span class="skel" style="width:60px"></span></div></div>
       <div class="summary-tile"><div class="label">Last 30 days</div><div class="value" id="sumDay"><span class="skel" style="width:60px"></span></div></div>
       <div class="summary-tile"><div class="label">Last updated</div><div class="value small" id="sumDate">fetching…</div></div>
-      <div class="summary-tile"><div class="label">Data source</div><div class="value small">pepy.tech via /api/stats</div></div>
+      <div class="summary-tile"><div class="label">Data source</div><div class="value small">pepy.tech · refreshes daily</div></div>
     </div>
   </div>
 
@@ -661,8 +661,9 @@ const VSCODE_EXTENSIONS = [
 //   3. pypistats.org via CORS proxies — last-resort fallback
 // ---------------------------------------------------------------------------
 const STATS_API_URL = '/api/stats';
-// Poll interval — matches the Vercel cron schedule (top of every hour)
-const AUTO_REFRESH_MS = 60 * 60 * 1000;       // 1 hour
+// Poll interval — matches the Vercel Hobby cron (once per day, midnight UTC)
+// Note: hourly cron requires Vercel Pro. Hobby plan = daily only.
+const AUTO_REFRESH_MS = 24 * 60 * 60 * 1000;  // 24 hours
 let autoRefreshTimer = null;
 let lastHitTime = null;           // ISO string of most recent successful API hit
 let dataJsonFetchedAt = null;
@@ -681,7 +682,7 @@ function showFetchFail(retryMs, reason){
   if(lastHitTime){
     const d = new Date(lastHitTime);
     const ts = d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-    lastEl.textContent = 'Last successful fetch: ' + ts + ' · auto-retries every hour';
+    lastEl.textContent = 'Last successful fetch: ' + ts + ' · auto-retries daily (midnight UTC)';
   } else {
     lastEl.textContent = 'No data fetched yet — will auto-retry in ' + Math.round(retryMs/60000) + ' min';
   }
@@ -1047,7 +1048,7 @@ function paintSnapshot(p){
   if(series.length > 0) renderTimeChart(p.pkg, series);
   else renderSnapshotChart(p.pkg, snap);
   const badge = document.getElementById('snapbadge-' + p.pkg);
-  if(badge) badge.textContent = 'last known · Jul 31 · updating…';
+  if(badge) badge.textContent = 'Jul 31 · updating…';
 }
 
 function paintAllSnapshots(){
@@ -1057,7 +1058,7 @@ function paintAllSnapshots(){
   const sumM  = PACKAGES.reduce((s,p) => s + p.snapshot.month, 0);
   document.getElementById('sumAllTime').textContent = fmtK(sumAT);
   document.getElementById('sumDay').textContent = fmt(sumM);
-  document.getElementById('sumDate').textContent = 'last known · Jul 31 · updating…';
+  document.getElementById('sumDate').textContent = 'Jul 31 snapshot · refreshing…';
 }
 
 // ---------------------------------------------------------------------------
@@ -1108,7 +1109,7 @@ async function loadFromApi(){
       const tag = document.getElementById('snaptag-' + p.pkg);
       if(tag) tag.style.display = 'none';
       const badge = document.getElementById('snapbadge-' + p.pkg);
-      if(badge) badge.textContent = 'live · hourly';
+      if(badge) badge.textContent = 'live · daily';
       clearErrorChart(p.pkg);
       const cleanSeries = (series||[]).map(s => ({ date: s.date, downloads: s.downloads }));
       DATA[p.pkg] = { recent:{ last_day:day, last_month:month }, series:cleanSeries, snapshot:false, snap:p.snapshot };
@@ -1122,7 +1123,7 @@ async function loadFromApi(){
     const ts = d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
     document.getElementById('sumDate').textContent = `updated ${ts}`;
     document.getElementById('statusDot').className = 'status-dot';
-    document.getElementById('statusText').textContent = 'live · hourly';
+    document.getElementById('statusText').textContent = 'live · daily';
     document.getElementById('lastUpdated').textContent = `updated ${ts}`;
     return { ok: true };
   }catch(e){
@@ -1142,7 +1143,7 @@ async function loadAll(){
   const result = await loadFromApi();
   if(result.ok){
     hideFetchFail();
-    console.log(`[db2-dash] next auto-refresh in ${AUTO_REFRESH_MS/60000}min`);
+    console.log('[db2-dash] next auto-refresh in 24h (daily)');
     autoRefreshTimer = setTimeout(loadAll, AUTO_REFRESH_MS);
     return;
   }
@@ -1157,7 +1158,7 @@ async function loadAll(){
     document.getElementById('lastUpdated').textContent = `last known ${ts}`;
   }
   showFetchFail(AUTO_REFRESH_MS, result.reason);
-  console.log(`[db2-dash] next auto-retry in ${AUTO_REFRESH_MS/60000}min`);
+  console.log('[db2-dash] next auto-retry in 24h');
   autoRefreshTimer = setTimeout(loadAll, AUTO_REFRESH_MS);
 }
 
