@@ -70,7 +70,7 @@ export default async function handler(req, res) {
     });
   }
 
-  console.log("[api/stats] fetching " + PACKAGES.length + " packages  key=****" + key.slice(-4));
+  console.log("[api/stats] v4 fetching " + PACKAGES.length + " packages  key=****" + key.slice(-4));
 
   const results = await Promise.allSettled(
     PACKAGES.map(async (pkg) => {
@@ -115,6 +115,7 @@ export default async function handler(req, res) {
 
   res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=600");
   return res.status(200).json({
+    v: 4,
     fetched_at: new Date().toISOString(),
     packages,
     ...(Object.keys(errors).length > 0 && { partial_errors: errors }),
