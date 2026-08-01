@@ -100,7 +100,20 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
   display:flex;align-items:center;gap:5px;white-space:nowrap;
 }
 .cds-header-btn:hover{background:#393939;}
+.cds-header-btn:disabled{opacity:.38;cursor:not-allowed;}
+.cds-header-btn:disabled:hover{background:transparent;}
 .theme-toggle{width:28px;height:28px;padding:0;justify-content:center;font-size:13px;}
+/* Refresh cooldown tooltip */
+.refresh-wrap{position:relative;display:flex;align-items:center;}
+.refresh-tip{
+  display:none;position:absolute;top:calc(100% + 6px);right:0;
+  background:#161616;color:#f4f4f4;
+  font-family:'IBM Plex Sans',sans-serif;font-size:11px;line-height:1.5;
+  padding:6px 10px;white-space:nowrap;z-index:200;
+  pointer-events:none;min-width:200px;
+}
+.refresh-tip::before{content:'';position:absolute;top:-4px;right:10px;border:4px solid transparent;border-bottom-color:#161616;border-top:none;}
+.refresh-wrap:hover .refresh-tip{display:block;}
 
 /* ── Shell content ── */
 .cds-shell-content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 24px 12px;width:100%;}
@@ -144,6 +157,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
   .card-grid{grid-template-columns:1fr;gap:14px;}
   .roadmap-grid{grid-template-columns:repeat(2,1fr);}
   .tile-stats .sval{font-size:20px;}
+  .vscode-grid{grid-template-columns:1fr;}
 }
 
 /* ── Tablet portrait / large phone (≤768px) ── */
@@ -178,8 +192,11 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
   .cds-header{padding:0 12px;gap:6px;height:44px;}
   .cds-header__name{font-size:13px;padding-right:10px;letter-spacing:0;}
   .cds-header__name .prefix{margin-right:4px;}
-  #statusText{display:none;}                      /* hide text, keep dot */
+  #statusText{display:none;}
   #lastUpdated{display:none;}
+  #refreshBtn span.refresh-label{display:none;}   /* icon only on mobile */
+  .refresh-tip{right:auto;left:0;}
+  .refresh-tip::before{right:auto;left:10px;}
   .cds-shell-content{padding:10px 12px 48px;}
   .breadcrumb{font-size:11px;gap:4px;}
   .page-head h1{font-size:18px;line-height:26px;}
@@ -375,6 +392,12 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
     <div class="status-line"><span class="status-dot" id="statusDot"></span><span id="statusText">loading…</span></div>
     <div class="status-line" id="lastUpdated"></div>
     <button class="cds-header-btn theme-toggle" id="themeToggle" title="Switch theme">☾</button>
+    <div class="refresh-wrap">
+      <button class="cds-header-btn" id="refreshBtn" title="Refresh data">
+        ↻ <span class="refresh-label">Refresh</span>
+      </button>
+      <div class="refresh-tip" id="refreshTip">Refresh limited to once per 2 hours<br>to protect the shared API quota.</div>
+    </div>
   </div>
 </div>
 
@@ -1294,6 +1317,48 @@ document.getElementById('fetchFailOk').addEventListener('click', hideFetchFail);
 document.getElementById('fetchFailOverlay').addEventListener('click', e => {
   if(e.target.id === 'fetchFailOverlay') hideFetchFail();
 });
+
+// ---------------------------------------------------------------------------
+// Refresh button — throttled to once per 2 hours to protect shared API quota
+// ---------------------------------------------------------------------------
+const REFRESH_COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 hours
+let lastManualRefresh = null;
+
+function updateRefreshBtn(){
+  const btn = document.getElementById('refreshBtn');
+  const tip = document.getElementById('refreshTip');
+  if(!lastManualRefresh){
+    btn.disabled = false;
+    tip.textContent = 'Refresh limited to once per 2 hours\nto protect the shared API quota.';
+    return;
+  }
+  const msSince = Date.now() - lastManualRefresh;
+  const msLeft  = REFRESH_COOLDOWN_MS - msSince;
+  if(msLeft <= 0){
+    btn.disabled = false;
+    tip.textContent = 'Refresh limited to once per 2 hours\nto protect the shared API quota.';
+  } else {
+    btn.disabled = true;
+    const mLeft = Math.ceil(msLeft / 60000);
+    tip.textContent = 'Next refresh available in ' + mLeft + ' min.\nLimited to protect the shared API quota.';
+  }
+}
+
+document.getElementById('refreshBtn').addEventListener('click', function(){
+  const msSince = lastManualRefresh ? Date.now() - lastManualRefresh : Infinity;
+  if(msSince < REFRESH_COOLDOWN_MS) return;
+  lastManualRefresh = Date.now();
+  updateRefreshBtn();
+  // re-check button state every minute until cooldown expires
+  var cooldownInterval = setInterval(function(){
+    updateRefreshBtn();
+    if(Date.now() - lastManualRefresh >= REFRESH_COOLDOWN_MS) clearInterval(cooldownInterval);
+  }, 60000);
+  clearTimeout(autoRefreshTimer);
+  loadAll();
+});
+
+updateRefreshBtn(); // set initial state
 
 function toggleTheme(){
   const html = document.documentElement;
