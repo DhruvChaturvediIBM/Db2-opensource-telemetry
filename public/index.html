@@ -150,20 +150,21 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
 .sidebar-section:last-child{border-bottom:none;}
 .sidebar-label{
   font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;
-  color:#6f6f6f;padding:0 16px 6px;font-family:'IBM Plex Mono',monospace;
+  color:#a8a8a8;padding:0 16px 6px;font-family:'IBM Plex Mono',monospace;
 }
+[data-theme="light"] .sidebar-label{color:#6f6f6f;}
 .sidebar-nav-item{
   display:flex;align-items:center;gap:10px;
   width:100%;padding:8px 16px;
   background:transparent;border:none;cursor:pointer;
-  color:#c6c6c6;font-size:13px;font-family:'IBM Plex Sans',sans-serif;
+  color:#ffffff;font-size:13px;font-family:'IBM Plex Sans',sans-serif;
   text-align:left;white-space:nowrap;overflow:hidden;
   transition:background .1s,color .1s;
 }
-.sidebar-nav-item:hover{background:rgba(255,255,255,.07);color:#f4f4f4;}
+.sidebar-nav-item:hover{background:rgba(255,255,255,.1);color:#fff;}
 .sidebar-nav-item.active{background:#0f62fe;color:#fff;}
-[data-theme="light"] .sidebar-nav-item{color:#525252;}
-[data-theme="light"] .sidebar-nav-item:hover{background:rgba(0,0,0,.05);color:#161616;}
+[data-theme="light"] .sidebar-nav-item{color:#161616;}
+[data-theme="light"] .sidebar-nav-item:hover{background:rgba(0,0,0,.06);color:#161616;}
 [data-theme="light"] .sidebar-nav-item.active{background:#0f62fe;color:#fff;}
 .sidebar-nav-icon{font-size:14px;flex-shrink:0;}
 .sidebar-nav-badge{
