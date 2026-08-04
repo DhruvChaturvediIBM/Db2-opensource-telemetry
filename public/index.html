@@ -1650,12 +1650,29 @@ document.querySelectorAll('.sidebar-nav-item').forEach(btn => {
 // ---------------------------------------------------------------------------
 // Open Issues — IBM repos only (no external search)
 // ---------------------------------------------------------------------------
+// IBM-owned repos — fetch ALL open issues (every issue here is Db2-related)
 const ISSUE_REPOS = [
   { repo:'IBM/db2developerextension-about', label:'VS Code Extension',  issuesUrl:'https://github.com/IBM/db2developerextension-about/issues' },
   { repo:'ibm/langchain-ibm',               label:'langchain-ibm',      issuesUrl:'https://github.com/ibm/langchain-ibm/issues' },
   { repo:'IBM/db2-sqlglot-plugin',          label:'db2-sqlglot-plugin', issuesUrl:'https://github.com/IBM/db2-sqlglot-plugin/issues' },
   { repo:'IBM/db2-dbt',                     label:'db2-dbt',            issuesUrl:'https://github.com/IBM/db2-dbt/issues' }
 ];
+
+// OSS repos — search API with strict Db2 keyword so only Db2 issues come back
+const ISSUE_SEARCH_REPOS = [
+  { repo:'langchain-ai/langchain-community', label:'LangChain Community', issuesUrl:'https://github.com/langchain-ai/langchain-community/issues' },
+  { repo:'run-llama/llama_index',            label:'LlamaIndex',          issuesUrl:'https://github.com/run-llama/llama_index/issues' },
+  { repo:'deepset-ai/haystack',             label:'Haystack',            issuesUrl:'https://github.com/deepset-ai/haystack/issues' },
+  { repo:'apache/airflow',                  label:'Apache Airflow',      issuesUrl:'https://github.com/apache/airflow/issues' }
+];
+
+// Keywords used to filter OSS issues — must contain at least one of these
+const DB2_KEYWORDS = ['db2', 'ibm db2', 'ibmdb2', 'db2vectorstore', 'db2-vector'];
+
+function isDb2Issue(issue){
+  const haystack = (issue.title + ' ' + (issue.labels||[]).join(' ')).toLowerCase();
+  return DB2_KEYWORDS.some(k => haystack.includes(k));
+}
 
 let allIssues = [];
 let issuesFilter = 'all';
@@ -1741,17 +1758,30 @@ function renderIssues(){
   container.innerHTML = html;
 }
 
-async function fetchRepoIssues(repo, repoLabel, repoIssuesUrl){
+async function fetchRepoIssues(repo, repoLabel, repoIssuesUrl, db2Only){
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 10000);
   try{
-    const r = await fetch(`https://api.github.com/repos/${repo}/issues?state=open&per_page=100`, {
-      headers:{'Accept':'application/vnd.github+json'}, signal:ctrl.signal
-    });
-    clearTimeout(timer);
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    return (await r.json())
-      .filter(i => !i.pull_request)
+    // For OSS repos use the search API with a tight Db2 query (max 30 results)
+    let items;
+    if(db2Only){
+      const q = encodeURIComponent(`repo:${repo} is:issue is:open db2`);
+      const r = await fetch(`https://api.github.com/search/issues?q=${q}&per_page=30&sort=created&order=desc`, {
+        headers:{'Accept':'application/vnd.github+json'}, signal:ctrl.signal
+      });
+      clearTimeout(timer);
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      items = (await r.json()).items || [];
+    } else {
+      const r = await fetch(`https://api.github.com/repos/${repo}/issues?state=open&per_page=100`, {
+        headers:{'Accept':'application/vnd.github+json'}, signal:ctrl.signal
+      });
+      clearTimeout(timer);
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      items = await r.json();
+    }
+    return items
+      .filter(i => !i.pull_request && (!db2Only || isDb2Issue({title:i.title, labels:(i.labels||[]).map(l=>l.name)})))
       .map(i => ({ title:i.title, url:i.html_url, number:i.number, repo, repoLabel, repoIssuesUrl, labels:(i.labels||[]).map(l=>l.name), createdAt:i.created_at }));
   }catch(e){ clearTimeout(timer); console.warn('[issues]', repo, e.message); return []; }
 }
@@ -1760,13 +1790,17 @@ async function loadIssues(){
   const container = document.getElementById('issuesContainer');
   container.innerHTML = '<div class="issues-loading">Fetching issues from GitHub…</div>';
 
-  const results = await Promise.allSettled(
-    ISSUE_REPOS.map(r => fetchRepoIssues(r.repo, r.label, r.issuesUrl))
-  );
+  const results = await Promise.allSettled([
+    ...ISSUE_REPOS.map(r => fetchRepoIssues(r.repo, r.label, r.issuesUrl, false)),
+    ...ISSUE_SEARCH_REPOS.map(r => fetchRepoIssues(r.repo, r.label, r.issuesUrl, true))
+  ]);
 
+  const seen = new Set();
   const combined = [];
   for(const r of results)
-    if(r.status === 'fulfilled') combined.push(...r.value);
+    if(r.status === 'fulfilled')
+      for(const i of r.value)
+        if(!seen.has(i.url)){ seen.add(i.url); combined.push(i); }
   combined.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
   allIssues = combined;
 
