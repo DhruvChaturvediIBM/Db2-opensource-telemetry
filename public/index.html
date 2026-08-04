@@ -1658,21 +1658,20 @@ document.querySelectorAll('.sidebar-nav-item').forEach(btn => {
 
 // ---------------------------------------------------------------------------
 // Open Issues — IBM repos only (no external search)
-// ---------------------------------------------------------------------------
 // IBM-owned repos — fetch ALL open issues (every issue here is Db2-related)
 const ISSUE_REPOS = [
   { repo:'IBM/db2developerextension-about', label:'VS Code Extension',  issuesUrl:'https://github.com/IBM/db2developerextension-about/issues' },
-  { repo:'ibm/langchain-ibm',               label:'langchain-ibm',      issuesUrl:'https://github.com/ibm/langchain-ibm/issues' },
   { repo:'IBM/db2-sqlglot-plugin',          label:'db2-sqlglot-plugin', issuesUrl:'https://github.com/IBM/db2-sqlglot-plugin/issues' },
   { repo:'IBM/db2-dbt',                     label:'db2-dbt',            issuesUrl:'https://github.com/IBM/db2-dbt/issues' }
 ];
 
 // OSS repos — search API with strict Db2 keyword so only Db2 issues come back
 const ISSUE_SEARCH_REPOS = [
+  { repo:'langchain-ai/langchain-ibm',       label:'langchain-ibm',      issuesUrl:'https://github.com/langchain-ai/langchain-ibm/issues' },
   { repo:'langchain-ai/langchain-community', label:'LangChain Community', issuesUrl:'https://github.com/langchain-ai/langchain-community/issues' },
   { repo:'run-llama/llama_index',            label:'LlamaIndex',          issuesUrl:'https://github.com/run-llama/llama_index/issues' },
-  { repo:'deepset-ai/haystack',             label:'Haystack',            issuesUrl:'https://github.com/deepset-ai/haystack/issues' },
-  { repo:'apache/airflow',                  label:'Apache Airflow',      issuesUrl:'https://github.com/apache/airflow/issues' }
+  { repo:'deepset-ai/haystack',              label:'Haystack',            issuesUrl:'https://github.com/deepset-ai/haystack/issues' },
+  { repo:'apache/airflow',                   label:'Apache Airflow',      issuesUrl:'https://github.com/apache/airflow/issues' }
 ];
 
 // Keywords used to filter OSS issues — must contain at least one of these
