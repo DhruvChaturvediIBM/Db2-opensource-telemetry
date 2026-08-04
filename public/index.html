@@ -161,11 +161,8 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
   text-align:left;white-space:nowrap;overflow:hidden;
   transition:background .1s,color .1s;
 }
-.sidebar-nav-item:hover{background:rgba(255,255,255,.1);color:#fff;}
+.sidebar-nav-item:hover{background:rgba(255,255,255,.12);color:#fff;}
 .sidebar-nav-item.active{background:#0f62fe;color:#fff;}
-[data-theme="light"] .sidebar-nav-item{color:#161616;}
-[data-theme="light"] .sidebar-nav-item:hover{background:rgba(0,0,0,.06);color:#161616;}
-[data-theme="light"] .sidebar-nav-item.active{background:#0f62fe;color:#fff;}
 .sidebar-nav-icon{font-size:14px;flex-shrink:0;}
 .sidebar-nav-badge{
   margin-left:auto;display:inline-flex;align-items:center;justify-content:center;
@@ -203,36 +200,49 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
 .idf-btn.active{background:var(--cds-interactive);color:#fff;border-color:var(--cds-interactive);}
 .idf-btn:hover:not(.active){background:var(--cds-layer-02);}
 .issues-count{font-size:12px;color:var(--cds-text-secondary);font-family:'IBM Plex Mono',monospace;margin-left:auto;}
-.issues-repo-group{margin-bottom:16px;}
-.issues-repo-header{
+/* issues board — column per repo */
+.issues-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-items:start;}
+.issues-col{background:var(--cds-layer-01);border:1px solid var(--cds-border-subtle-00);display:flex;flex-direction:column;}
+[data-theme="dark"] .issues-col{border-color:transparent;}
+.issues-col-header{
   display:flex;align-items:center;justify-content:space-between;
-  padding:7px 16px;background:var(--cds-layer-02);
-  border:1px solid var(--cds-border-subtle-00);border-bottom:none;
+  padding:9px 14px;background:var(--cds-layer-02);
+  border-bottom:1px solid var(--cds-border-subtle-00);position:sticky;top:0;z-index:1;
 }
-.issues-repo-name{font-size:13px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--cds-text-primary);}
-.issues-repo-link{font-size:12px;color:var(--cds-link-primary);text-decoration:none;}
-.issues-repo-link:hover{text-decoration:underline;}
-.issue-list{border:1px solid var(--cds-border-subtle-00);}
-[data-theme="dark"] .issue-list{border-color:transparent;}
+.issues-col-name{font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--cds-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.issues-col-meta{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.issues-col-count{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:20px;height:18px;padding:0 5px;border-radius:9px;
+  background:var(--cds-interactive);color:#fff;font-size:10px;font-weight:700;
+  font-family:'IBM Plex Mono',monospace;
+}
+.issues-col-count.zero{background:var(--cds-border-subtle-01);color:var(--cds-text-secondary);}
+.issues-col-link{font-size:11px;color:var(--cds-link-primary);text-decoration:none;white-space:nowrap;}
+.issues-col-link:hover{text-decoration:underline;}
+.issues-col-body{flex:1;}
 .issue-row{
-  display:flex;align-items:flex-start;gap:12px;
-  padding:12px 16px;border-bottom:1px solid var(--cds-border-subtle-00);
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 14px;border-bottom:1px solid var(--cds-border-subtle-00);
   background:var(--cds-layer-01);
 }
 .issue-row:last-child{border-bottom:none;}
 .issue-row:hover{background:var(--cds-layer-02);}
 .issue-icon{flex-shrink:0;margin-top:2px;}
 .issue-body{flex:1;min-width:0;}
-.issue-title{font-size:14px;font-weight:500;color:var(--cds-text-primary);line-height:20px;margin-bottom:4px;}
+.issue-title{font-size:13px;font-weight:500;color:var(--cds-text-primary);line-height:18px;margin-bottom:3px;}
 .issue-title a{color:inherit;text-decoration:none;}
 .issue-title a:hover{color:var(--cds-link-primary);text-decoration:underline;}
-.issue-meta{font-size:12px;color:var(--cds-text-secondary);font-family:'IBM Plex Mono',monospace;display:flex;gap:8px;flex-wrap:wrap;}
-.issue-labels{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.issue-meta{font-size:11px;color:var(--cds-text-secondary);font-family:'IBM Plex Mono',monospace;display:flex;gap:6px;flex-wrap:wrap;}
+.issue-labels{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;}
 .issue-label{
-  display:inline-flex;align-items:center;height:20px;padding:0 7px;
-  font-size:11px;font-weight:500;border-radius:2px;
+  display:inline-flex;align-items:center;height:18px;padding:0 6px;
+  font-size:10px;font-weight:500;border-radius:2px;
   background:var(--cds-tag-blue-bg);color:var(--cds-tag-blue-text);
 }
+.issues-col-empty{padding:24px 14px;text-align:center;font-size:12px;color:var(--cds-text-placeholder);font-family:'IBM Plex Mono',monospace;}
+.issues-col-loading{padding:24px 14px;text-align:center;font-size:12px;color:var(--cds-text-placeholder);font-family:'IBM Plex Mono',monospace;}
+.issues-col-err{padding:10px 14px;font-size:11px;color:#fa4d56;font-family:'IBM Plex Mono',monospace;}
 .issues-empty{padding:40px;text-align:center;font-size:14px;color:var(--cds-text-secondary);background:var(--cds-layer-01);border:1px solid var(--cds-border-subtle-00);}
 .issues-loading{padding:40px;text-align:center;font-size:13px;color:var(--cds-text-secondary);font-family:'IBM Plex Mono',monospace;background:var(--cds-layer-01);border:1px solid var(--cds-border-subtle-00);}
 
@@ -650,7 +660,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
     <div class="app-page" id="page-issues">
       <div class="issues-page-head">
         <h1>Open Issues</h1>
-        <p>Open issues across IBM Db2 repositories — VS Code extension, vector store connectors &amp; ecosystem.</p>
+        <p>One column per repository — IBM-owned repos show all issues; OSS repos show only Db2-related issues.</p>
       </div>
       <div class="issues-filter-bar">
         <input type="text" id="issueSearch" placeholder="Search title, label, repo…" />
@@ -660,9 +670,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
         <button class="idf-btn" data-filter="question">Question</button>
         <span class="issues-count" id="issuesCount"></span>
       </div>
-      <div id="issuesContainer">
-        <div class="issues-loading">Loading issues…</div>
-      </div>
+      <div class="issues-board" id="issuesBoard"></div>
     </div>
 
   </div><!-- /app-main -->
@@ -1713,50 +1721,61 @@ function getFilteredIssues(){
   return list;
 }
 
+// All known repos in order — used to keep columns stable
+const ALL_REPOS = [
+  ...ISSUE_REPOS.map(r => ({ label: r.label, url: r.issuesUrl })),
+  ...ISSUE_SEARCH_REPOS.map(r => ({ label: r.label, url: r.issuesUrl }))
+];
+
+function buildIssueRowHtml(issue){
+  const labelsHtml = (issue.labels||[]).map(l =>
+    `<span class="issue-label" style="${labelColor(l)}">${l}</span>`
+  ).join('');
+  return `<div class="issue-row">
+    <div class="issue-icon">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="7" stroke="#42be65" stroke-width="1.5"/>
+        <circle cx="8" cy="8" r="2.5" fill="#42be65"/>
+      </svg>
+    </div>
+    <div class="issue-body">
+      <div class="issue-title"><a href="${issue.url}" target="_blank" rel="noopener">${issue.title}</a></div>
+      <div class="issue-meta"><span>#${issue.number}</span><span>opened ${relativeTime(issue.createdAt)}</span></div>
+      ${labelsHtml ? '<div class="issue-labels">'+labelsHtml+'</div>' : ''}
+    </div>
+  </div>`;
+}
+
 function renderIssues(){
-  const container = document.getElementById('issuesContainer');
+  const board = document.getElementById('issuesBoard');
   const filtered = getFilteredIssues();
   const countEl = document.getElementById('issuesCount');
   if(countEl) countEl.textContent = filtered.length + ' issue' + (filtered.length !== 1 ? 's' : '');
 
-  if(filtered.length === 0){
-    container.innerHTML = '<div class="issues-empty">No issues match the current filter.</div>';
-    return;
-  }
-
+  // Build lookup of filtered issues by repo label
   const byRepo = {};
   filtered.forEach(i => { (byRepo[i.repoLabel] = byRepo[i.repoLabel]||[]).push(i); });
 
+  // One column per known repo, in fixed order
   let html = '';
-  for(const [repoLabel, issues] of Object.entries(byRepo)){
-    const repoUrl = (allIssues.find(i => i.repoLabel === repoLabel)||{}).repoIssuesUrl || '#';
-    html += `<div class="issues-repo-group">
-      <div class="issues-repo-header">
-        <span class="issues-repo-name">${repoLabel} <span style="font-weight:400;opacity:.6">(${issues.length})</span></span>
-        <a class="issues-repo-link" href="${repoUrl}" target="_blank" rel="noopener">View on GitHub ↗</a>
+  for(const repo of ALL_REPOS){
+    const issues = byRepo[repo.label] || [];
+    const countClass = issues.length === 0 ? 'zero' : '';
+    const bodyHtml = issues.length === 0
+      ? '<div class="issues-col-empty">No Db2 issues open</div>'
+      : issues.map(buildIssueRowHtml).join('');
+    html += `<div class="issues-col">
+      <div class="issues-col-header">
+        <span class="issues-col-name" title="${repo.label}">${repo.label}</span>
+        <span class="issues-col-meta">
+          <span class="issues-col-count ${countClass}">${issues.length}</span>
+          <a class="issues-col-link" href="${repo.url}" target="_blank" rel="noopener">GitHub ↗</a>
+        </span>
       </div>
-      <div class="issue-list">`;
-    for(const issue of issues){
-      const labelsHtml = (issue.labels||[]).map(l =>
-        `<span class="issue-label" style="${labelColor(l)}">${l}</span>`
-      ).join('');
-      html += `<div class="issue-row">
-        <div class="issue-icon">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="7" stroke="#42be65" stroke-width="1.5"/>
-            <circle cx="8" cy="8" r="2.5" fill="#42be65"/>
-          </svg>
-        </div>
-        <div class="issue-body">
-          <div class="issue-title"><a href="${issue.url}" target="_blank" rel="noopener">${issue.title}</a></div>
-          <div class="issue-meta"><span>#${issue.number}</span><span>opened ${relativeTime(issue.createdAt)}</span></div>
-          ${labelsHtml ? '<div class="issue-labels">'+labelsHtml+'</div>' : ''}
-        </div>
-      </div>`;
-    }
-    html += `</div></div>`;
+      <div class="issues-col-body">${bodyHtml}</div>
+    </div>`;
   }
-  container.innerHTML = html;
+  board.innerHTML = html;
 }
 
 async function fetchRepoIssues(repo, repoLabel, repoIssuesUrl, db2Only){
@@ -1788,8 +1807,18 @@ async function fetchRepoIssues(repo, repoLabel, repoIssuesUrl, db2Only){
 }
 
 async function loadIssues(){
-  const container = document.getElementById('issuesContainer');
-  container.innerHTML = '<div class="issues-loading">Fetching issues from GitHub…</div>';
+  // Show loading state in each column immediately
+  const board = document.getElementById('issuesBoard');
+  board.innerHTML = ALL_REPOS.map(r => `
+    <div class="issues-col">
+      <div class="issues-col-header">
+        <span class="issues-col-name">${r.label}</span>
+        <span class="issues-col-meta">
+          <a class="issues-col-link" href="${r.url}" target="_blank" rel="noopener">GitHub ↗</a>
+        </span>
+      </div>
+      <div class="issues-col-body"><div class="issues-col-loading">fetching…</div></div>
+    </div>`).join('');
 
   const results = await Promise.allSettled([
     ...ISSUE_REPOS.map(r => fetchRepoIssues(r.repo, r.label, r.issuesUrl, false)),
@@ -1810,12 +1839,8 @@ async function loadIssues(){
   const badge = document.getElementById('issuesBadge');
   if(badge){ badge.textContent = n > 99 ? '99+' : String(n); badge.style.display = n > 0 ? '' : 'none'; }
 
-  if(n === 0){
-    container.innerHTML = '<div class="issues-empty">No open issues found — all clear!</div>';
-    const countEl = document.getElementById('issuesCount');
-    if(countEl) countEl.textContent = '0 issues';
-    return;
-  }
+  const countEl = document.getElementById('issuesCount');
+  if(countEl) countEl.textContent = n + ' issue' + (n !== 1 ? 's' : '');
   renderIssues();
 }
 
