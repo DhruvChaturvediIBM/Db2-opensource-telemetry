@@ -1665,18 +1665,39 @@ const ISSUE_REPOS = [
   { repo:'IBM/db2-dbt',                     label:'db2-dbt',            issuesUrl:'https://github.com/IBM/db2-dbt/issues' }
 ];
 
-// OSS repos — search API with strict Db2 keyword so only Db2 issues come back
+// OSS repos — search API filtered to IBM Db2 issues only
 const ISSUE_SEARCH_REPOS = [
+  { repo:'langchain-ai/langchain-ibm',       label:'langchain-ibm',      issuesUrl:'https://github.com/langchain-ai/langchain-ibm/issues' },
+  { repo:'langflow-ai/langflow',             label:'LangFlow',            issuesUrl:'https://github.com/langflow-ai/langflow/issues' },
   { repo:'langchain-ai/langchain-community', label:'LangChain Community', issuesUrl:'https://github.com/langchain-ai/langchain-community/issues' },
   { repo:'run-llama/llama_index',            label:'LlamaIndex',          issuesUrl:'https://github.com/run-llama/llama_index/issues' },
   { repo:'deepset-ai/haystack',              label:'Haystack',            issuesUrl:'https://github.com/deepset-ai/haystack/issues' },
   { repo:'apache/airflow',                   label:'Apache Airflow',      issuesUrl:'https://github.com/apache/airflow/issues' }
 ];
 
-// Keywords used to filter OSS issues — must contain at least one of these
-const DB2_KEYWORDS = ['db2', 'ibm db2', 'ibmdb2', 'db2vectorstore', 'db2-vector'];
+// All variations of IBM Db2 that can appear in issue titles / labels / body
+// Search query uses "ibm db2 OR db2" to cast a wide net at API level,
+// then this list applies a strict client-side check so nothing non-Db2 slips through
+const DB2_KEYWORDS = [
+  'db2',          // catches ibm db2, db2vectorstore, db2-dbt, db2-sqlglot etc.
+  'ibmdb2',       // no-space variant
+  'db2vectorstore',
+  'db2-vector',
+  'ibm db2',
+  'ibm_db',       // python ibm_db driver
+  'ibm-db',       // hyphenated
+  'db2luw',       // Db2 for LUW shorthand
+  'db2 for luw',
+  'db2 for z',
+  'db2 for i',
+  'db2 connect',
+  'ibm database',
+  'lfx-ibm',      // LangFlow IBM package name
+  'langchain-db2' // LangChain Db2 package
+];
 
 function isDb2Issue(issue){
+  // check title + label names (body not available from issues API)
   const haystack = (issue.title + ' ' + (issue.labels||[]).join(' ')).toLowerCase();
   return DB2_KEYWORDS.some(k => haystack.includes(k));
 }
@@ -1783,8 +1804,8 @@ async function fetchRepoIssues(repo, repoLabel, repoIssuesUrl, db2Only){
     // For OSS repos use the search API with a tight Db2 query (max 30 results)
     let items;
     if(db2Only){
-      const q = encodeURIComponent(`repo:${repo} is:issue is:open db2`);
-      const r = await fetch(`https://api.github.com/search/issues?q=${q}&per_page=30&sort=created&order=desc`, {
+      const q = encodeURIComponent(`repo:${repo} is:issue is:open db2 OR "ibm db2" OR ibm_db OR lfx-ibm OR langchain-db2`);
+      const r = await fetch(`https://api.github.com/search/issues?q=${q}&per_page=50&sort=created&order=desc`, {
         headers:{'Accept':'application/vnd.github+json'}, signal:ctrl.signal
       });
       clearTimeout(timer);
