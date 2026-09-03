@@ -529,9 +529,10 @@ const ROADMAP = [
   {
     framework: "CrewAI",
     status: "approved",
-    statusLabel: "Approved · Releasing Aug 2025",
-    desc: "Native IBM Db2 vector store tool for CrewAI agents. Connector is approved and scheduled for release in August 2025.",
-    note: "v0.1.0 planned · Aug 2025"
+    statusLabel: "Released",
+    desc: "Native IBM Db2 vector store tool for CrewAI agents.",
+    note: "Telemetry coming soon",
+    issuesUrl: "https://github.com/crewAIInc/crewAI/issues"
   },
   {
     framework: "n8n",
@@ -554,9 +555,10 @@ const ECOSYSTEM = [
   {
     framework: "Apache Airflow",
     status: "approved",
-    statusLabel: "PR Approved · Following merge process",
+    statusLabel: "Released",
     desc: "Native IBM Db2 provider for Apache Airflow — Db2Hook, Db2Operator, and connection-type support for ETL pipeline orchestration.",
-    note: "PR approved · merge in progress"
+    note: "Telemetry coming soon",
+    issuesUrl: "https://github.com/apache/airflow/issues"
   },
   {
     framework: "Ibis",
@@ -861,6 +863,7 @@ function buildRoadmapTile(r){
     <div class="rt-name">${r.framework}</div>
     <div class="rt-desc">${r.desc}</div>
     <div class="rt-note">${r.note}</div>
+    ${r.issuesUrl ? `<a class="rt-note" href="${r.issuesUrl}" target="_blank" rel="noopener noreferrer">View issues</a>` : ''}
   `;
   return el;
 }
