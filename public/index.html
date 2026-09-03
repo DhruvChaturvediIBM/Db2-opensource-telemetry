@@ -640,7 +640,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
       <div class="summary-panel">
         <div class="summary-panel__title">Ecosystem overview</div>
         <div class="summary-row">
-          <div class="summary-tile"><div class="label">Packages tracked</div><div class="value">6</div></div>
+          <div class="summary-tile"><div class="label">Packages tracked</div><div class="value">8</div></div>
           <div class="summary-tile"><div class="label">Total all-time</div><div class="value" id="sumAllTime"><span class="skel" style="width:60px"></span></div></div>
           <div class="summary-tile"><div class="label">Last 30 days</div><div class="value" id="sumDay"><span class="skel" style="width:60px"></span></div></div>
           <div class="summary-tile"><div class="label">Last updated</div><div class="value small" id="sumDate">fetching…</div></div>
@@ -841,6 +841,20 @@ const PACKAGES = [
         {date:"2026-07-21",v:21},{date:"2026-07-27",v:18},{date:"2026-07-28",v:16}
       ]
     }
+  },
+  {
+    pkg: "crewai-db2-vector-search-tool",
+    displayName: "CrewAI Db2 vector search tool",
+    framework: "CrewAI",
+    defn: "Db2 vector search tool for CrewAI agents.",
+    unavailable: true
+  },
+  {
+    pkg: "apache-airflow-db2-provider",
+    displayName: "Apache Airflow Db2 Provider",
+    framework: "Apache Airflow",
+    defn: "IBM Db2 provider for Apache Airflow.",
+    unavailable: true
   }
 ];
 
@@ -1098,6 +1112,22 @@ function buildCard(p){
   tileChartType[id] = 'line';
   const el = document.createElement('div');
   el.className = 'tile';
+  if(p.unavailable){
+    el.innerHTML = `
+      <div class="tile-head">
+        <span class="cds-tag">${p.framework}</span>
+        <div class="pkgname">${p.displayName}</div>
+        <div class="defn">${p.defn}</div>
+      </div>
+      <div class="tile-stats">
+        <div><div class="slabel">All-time</div><div class="sval muted">Not available yet</div></div>
+        <div><div class="slabel">Last 30 days</div><div class="sval muted">Not available yet</div></div>
+        <div><div class="slabel">Last 24 h</div><div class="sval muted">Not available yet</div></div>
+      </div>
+      <div class="tile-foot"><span class="snap-badge">Telemetry coming soon</span></div>
+    `;
+    return el;
+  }
   el.innerHTML = `
     <div class="tile-head">
       <span class="cds-tag">${p.framework}</span>
@@ -1304,6 +1334,7 @@ function setStats(pkg, allTime, month, day, perSec){
 
 // ---- Boot paint: show real snapshot numbers + skeleton shimmer on stat cells ----
 function paintSnapshot(p){
+  if(p.unavailable) return;
   const snap = p.snapshot;
   // Paint real numbers as initial state — these are genuine last-known data
   setStats(p.pkg, snap.allTime, snap.month, snap.day, snap.perSec);
@@ -1319,8 +1350,8 @@ function paintSnapshot(p){
 function paintAllSnapshots(){
   PACKAGES.forEach(paintSnapshot);
   // Show real totals in summary while API loads
-  const sumAT = PACKAGES.reduce((s,p) => s + p.snapshot.allTime, 0);
-  const sumM  = PACKAGES.reduce((s,p) => s + p.snapshot.month, 0);
+  const sumAT = PACKAGES.filter(p => !p.unavailable).reduce((s,p) => s + p.snapshot.allTime, 0);
+  const sumM  = PACKAGES.filter(p => !p.unavailable).reduce((s,p) => s + p.snapshot.month, 0);
   document.getElementById('sumAllTime').textContent = fmtK(sumAT);
   document.getElementById('sumDay').textContent = fmt(sumM);
   document.getElementById('sumDate').textContent = 'Jul 31 snapshot · refreshing…';
@@ -1672,7 +1703,8 @@ const ISSUE_SEARCH_REPOS = [
   { repo:'langchain-ai/langchain-community', label:'LangChain Community', issuesUrl:'https://github.com/langchain-ai/langchain-community/issues' },
   { repo:'run-llama/llama_index',            label:'LlamaIndex',          issuesUrl:'https://github.com/run-llama/llama_index/issues' },
   { repo:'deepset-ai/haystack',              label:'Haystack',            issuesUrl:'https://github.com/deepset-ai/haystack/issues' },
-  { repo:'apache/airflow',                   label:'Apache Airflow',      issuesUrl:'https://github.com/apache/airflow/issues' }
+  { repo:'apache/airflow',                   label:'Apache Airflow',      issuesUrl:'https://github.com/apache/airflow/issues' },
+  { repo:'crewAIInc/crewAI',                 label:'CrewAI Db2 vector search tool', issuesUrl:'https://github.com/crewAIInc/crewAI/issues' }
 ];
 
 // All variations of IBM Db2 that can appear in issue titles / labels / body
