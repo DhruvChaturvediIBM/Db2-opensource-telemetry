@@ -51,6 +51,8 @@ Frontend (public/index.html) renders charts + stats
 | `db2-sqlglot-dialect` | SQLGlot | https://pypi.org/project/db2-sqlglot-dialect/ |
 | `ibm-dbt-db2` | dbt | https://pypi.org/project/ibm-dbt-db2/ |
 
+> **Released — Additions to the Ecosystem:** SQLMesh, Apache Airflow and CrewAI ship Db2 support inside their own upstream projects (no separate Db2 package), so they have no download telemetry. They are listed with links to their merged PRs. Their Db2 issues are tracked on the Open Issues page.
+
 ---
 
 ## How the refresh works

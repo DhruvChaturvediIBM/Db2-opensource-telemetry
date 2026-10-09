@@ -528,6 +528,8 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
 .roadmap-tile .rt-name{font-size:16px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--cds-text-primary);}
 .roadmap-tile .rt-desc{font-size:13px;line-height:20px;color:var(--cds-text-secondary);}
 .roadmap-tile .rt-note{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--cds-text-placeholder);}
+.roadmap-tile .rt-link{color:var(--cds-link-primary);text-decoration:none;font-size:13px;font-weight:500;}
+.roadmap-tile .rt-link:hover{text-decoration:underline;}
 
 /* page footer */
 .page-foot{padding-top:10px;border-top:1px solid var(--cds-border-subtle-00);font-size:12px;color:var(--cds-text-secondary);display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;}
@@ -640,7 +642,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
       <div class="summary-panel">
         <div class="summary-panel__title">Ecosystem overview</div>
         <div class="summary-row">
-          <div class="summary-tile"><div class="label">Packages tracked</div><div class="value">8</div></div>
+          <div class="summary-tile"><div class="label">Packages tracked</div><div class="value">6</div></div>
           <div class="summary-tile"><div class="label">Total all-time</div><div class="value" id="sumAllTime"><span class="skel" style="width:60px"></span></div></div>
           <div class="summary-tile"><div class="label">Last 30 days</div><div class="value" id="sumDay"><span class="skel" style="width:60px"></span></div></div>
           <div class="summary-tile"><div class="label">Last updated</div><div class="value small" id="sumDate">fetching…</div></div>
@@ -648,7 +650,9 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
         </div>
       </div>
       <div class="card-grid" id="grid"></div>
-      <div class="roadmap-section-title" style="margin-top:4px;">VS Code Extensions</div>
+      <div class="roadmap-section-title" style="margin-top:4px;">Released — Additions to the Ecosystem</div>
+      <div class="roadmap-grid" id="releasedGrid"></div>
+      <div class="roadmap-section-title" style="margin-top:16px;">VS Code Extensions</div>
       <div class="vscode-grid" id="vscodeGrid"></div>
       <div class="roadmap-section-title" style="margin-top:4px;">Connector Roadmap</div>
       <div class="roadmap-grid" id="roadmapGrid"></div>
@@ -841,32 +845,39 @@ const PACKAGES = [
         {date:"2026-07-21",v:21},{date:"2026-07-27",v:18},{date:"2026-07-28",v:16}
       ]
     }
-  },
-  {
-    pkg: "crewai-db2-vector-search-tool",
-    displayName: "CrewAI Db2 vector search tool",
-    framework: "CrewAI",
-    defn: "Db2 vector search tool for CrewAI agents.",
-    unavailable: true
-  },
-  {
-    pkg: "apache-airflow-db2-provider",
-    displayName: "Apache Airflow Db2 Provider",
-    framework: "Apache Airflow",
-    defn: "IBM Db2 provider for Apache Airflow.",
-    unavailable: true
   }
 ];
 
-// Vector store connector roadmap (3 items shown under "Connector Roadmap")
-const ROADMAP = [
+// Db2 integrations that shipped inside an upstream project (no separate Db2 package, so no download telemetry)
+const RELEASED = [
+  {
+    framework: "SQLMesh",
+    statusLabel: "Released · Oct 2026",
+    desc: "IBM Db2 engine adapter merged into SQLMesh — plan-first, SQL-aware data transformation with virtual data environments, previews and safe deploys against Db2. Install with the sqlmesh[db2] extra.",
+    note: "Merged Oct 1, 2026 · SQLMesh PR #6030",
+    link: "https://github.com/SQLMesh/sqlmesh/pull/6030",
+    linkLabel: "SQLMesh PR #6030"
+  },
+  {
+    framework: "Apache Airflow",
+    statusLabel: "Released · Aug 2026",
+    desc: "IBM Db2 provider merged into Apache Airflow — Db2 Hook and connection-type support for ETL pipeline orchestration.",
+    note: "Merged Aug 23, 2026 · Airflow PR #67532",
+    link: "https://github.com/apache/airflow/pull/67532",
+    linkLabel: "Airflow PR #67532"
+  },
   {
     framework: "CrewAI",
-    status: "approved",
-    statusLabel: "Approved · Releasing Aug 2025",
-    desc: "Native IBM Db2 vector store tool for CrewAI agents. Connector is approved and scheduled for release in August 2025.",
-    note: "v0.1.0 planned · Aug 2025"
-  },
+    statusLabel: "Released · Jul 2026",
+    desc: "IBM Db2 search tool merged into crewai-tools — Db2 vector search for CrewAI agents.",
+    note: "Merged Jul 31, 2026 · CrewAI PR #5885",
+    link: "https://github.com/crewAIInc/crewAI/pull/5885",
+    linkLabel: "CrewAI PR #5885"
+  }
+];
+
+// Vector store connector roadmap (2 items shown under "Connector Roadmap")
+const ROADMAP = [
   {
     framework: "n8n",
     status: "in-progress",
@@ -886,25 +897,11 @@ const ROADMAP = [
 // Ecosystem connector pipeline (shown under "Ecosystem Connectors")
 const ECOSYSTEM = [
   {
-    framework: "Apache Airflow",
-    status: "approved",
-    statusLabel: "PR Approved · Following merge process",
-    desc: "Native IBM Db2 provider for Apache Airflow — Db2Hook, Db2Operator, and connection-type support for ETL pipeline orchestration.",
-    note: "PR approved · merge in progress"
-  },
-  {
     framework: "Ibis",
     status: "in-progress",
     statusLabel: "PR Raised · Pending Review",
     desc: "IBM Db2 backend for Ibis — the portable Python dataframe library — enabling dialect-independent analytics SQL execution against Db2.",
     note: "PR raised · pending review"
-  },
-  {
-    framework: "SQLMesh",
-    status: "in-progress",
-    statusLabel: "QA in Progress",
-    desc: "IBM Db2 engine adapter for SQLMesh — full support for virtual data environments, incremental models, snapshots, and automated plan/apply against Db2.",
-    note: "QA in progress"
   },
   {
     framework: "Apache Arrow",
@@ -1007,6 +1004,7 @@ function fmt(n){
 
 function fmtK(n){
   if(n===null||n===undefined||isNaN(n)) return "—";
+  if(n >= 1000000) return (n/1000000).toFixed(1).replace(/\.0$/,'') + 'M';
   if(n >= 1000) return (n/1000).toFixed(1).replace(/\.0$/,'') + 'k';
   return String(n);
 }
@@ -1112,6 +1110,7 @@ function buildCard(p){
   tileChartType[id] = 'line';
   const el = document.createElement('div');
   el.className = 'tile';
+  el.dataset.pkg = id;
   if(p.unavailable){
     el.innerHTML = `
       <div class="tile-head">
@@ -1190,12 +1189,13 @@ function buildCard(p){
 function buildRoadmapTile(r){
   const el = document.createElement('div');
   el.className = 'roadmap-tile';
-  const tagClass = r.status === 'approved' ? 'green' : r.status === 'review' ? 'purple' : 'yellow';
+  const tagClass = r.link ? 'green' : r.status === 'approved' ? 'green' : r.status === 'review' ? 'purple' : 'yellow';
   el.innerHTML = `
     <span class="cds-tag ${tagClass}">${r.statusLabel}</span>
     <div class="rt-name">${r.framework}</div>
     <div class="rt-desc">${r.desc}</div>
     <div class="rt-note">${r.note}</div>
+    ${r.link ? `<a class="rt-link" href="${r.link}" target="_blank" rel="noopener">${r.linkLabel} ↗</a>` : ''}
   `;
   return el;
 }
@@ -1344,17 +1344,31 @@ function paintSnapshot(p){
   if(series.length > 0) renderTimeChart(p.pkg, series);
   else renderSnapshotChart(p.pkg, snap);
   const badge = document.getElementById('snapbadge-' + p.pkg);
-  if(badge) badge.textContent = 'Jul 31 · updating…';
+  if(badge) badge.textContent = (snap.asOf || 'Jul 31') + ' · updating…';
+}
+
+// Order tiles by all-time downloads (highest first); "coming soon" tiles go last
+function allTimeOf(p){
+  if(p.unavailable) return -1;
+  return DATA[p.pkg]?.allTime ?? p.snapshot.allTime;
+}
+
+function sortGrid(){
+  const g = document.getElementById('grid');
+  [...PACKAGES].sort((a,b) => allTimeOf(b) - allTimeOf(a)).forEach(p => {
+    const el = g.querySelector('[data-pkg="' + p.pkg + '"]');
+    if(el) g.appendChild(el);
+  });
 }
 
 function paintAllSnapshots(){
   PACKAGES.forEach(paintSnapshot);
   // Show real totals in summary while API loads
-  const sumAT = PACKAGES.filter(p => !p.unavailable).reduce((s,p) => s + p.snapshot.allTime, 0);
-  const sumM  = PACKAGES.filter(p => !p.unavailable).reduce((s,p) => s + p.snapshot.month, 0);
+  const sumAT = PACKAGES.reduce((s,p) => s + p.snapshot.allTime, 0);
+  const sumM  = PACKAGES.reduce((s,p) => s + p.snapshot.month, 0);
   document.getElementById('sumAllTime').textContent = fmtK(sumAT);
   document.getElementById('sumDay').textContent = fmt(sumM);
-  document.getElementById('sumDate').textContent = 'Jul 31 snapshot · refreshing…';
+  document.getElementById('sumDate').textContent = 'snapshot · refreshing…';
 }
 
 // ---------------------------------------------------------------------------
@@ -1408,9 +1422,10 @@ async function loadFromApi(){
       if(badge) badge.textContent = 'live · daily';
       clearErrorChart(p.pkg);
       const cleanSeries = (series||[]).map(s => ({ date: s.date, downloads: s.downloads }));
-      DATA[p.pkg] = { recent:{ last_day:day, last_month:month }, series:cleanSeries, snapshot:false, snap:p.snapshot };
+      DATA[p.pkg] = { recent:{ last_day:day, last_month:month }, series:cleanSeries, snapshot:false, snap:p.snapshot, allTime };
       if(cleanSeries.length > 0) renderTimeChart(p.pkg, cleanSeries);
     }
+    sortGrid();
     if(hitCount === 0){ console.warn('[db2-dash]   0 packages matched'); return { ok:false, reason:'0 packages in response' }; }
 
     document.getElementById('sumAllTime').textContent = fmtK(sumAT);
@@ -1649,11 +1664,14 @@ const grid = document.getElementById('grid');
 PACKAGES.forEach(p => grid.appendChild(buildCard(p)));
 const vscodeGrid = document.getElementById('vscodeGrid');
 VSCODE_EXTENSIONS.forEach(ext => vscodeGrid.appendChild(buildVscodeCard(ext)));
+const releasedGrid = document.getElementById('releasedGrid');
+RELEASED.forEach(r => releasedGrid.appendChild(buildRoadmapTile(r)));
 const roadmapGrid = document.getElementById('roadmapGrid');
 ROADMAP.forEach(r => roadmapGrid.appendChild(buildRoadmapTile(r)));
 const ecosystemGrid = document.getElementById('ecosystemGrid');
 ECOSYSTEM.forEach(r => ecosystemGrid.appendChild(buildRoadmapTile(r)));
-paintAllSnapshots();   // shows real Jul-31 numbers immediately
+paintAllSnapshots();   // shows real last-known numbers immediately
+sortGrid();
 setTimeout(() => { loadAll(); refreshVscodeExtensions(); }, 0);  // live fetch starts after first paint
 
 // ---------------------------------------------------------------------------
@@ -1704,6 +1722,7 @@ const ISSUE_SEARCH_REPOS = [
   { repo:'run-llama/llama_index',            label:'LlamaIndex',          issuesUrl:'https://github.com/run-llama/llama_index/issues' },
   { repo:'deepset-ai/haystack',              label:'Haystack',            issuesUrl:'https://github.com/deepset-ai/haystack/issues' },
   { repo:'apache/airflow',                   label:'Apache Airflow',      issuesUrl:'https://github.com/apache/airflow/issues' },
+  { repo:'SQLMesh/sqlmesh',                  label:'SQLMesh',             issuesUrl:'https://github.com/SQLMesh/sqlmesh/issues' },
   { repo:'crewAIInc/crewAI',                 label:'CrewAI Db2 vector search tool', issuesUrl:'https://github.com/crewAIInc/crewAI/issues' }
 ];
 
@@ -1852,7 +1871,7 @@ async function fetchRepoIssues(repo, repoLabel, repoIssuesUrl, db2Only){
       items = await r.json();
     }
     return items
-      .filter(i => !i.pull_request && (!db2Only || isDb2Issue({title:i.title, labels:(i.labels||[]).map(l=>l.name)})))
+      .filter(i => !i.pull_request && (!db2Only || isDb2Issue({title:i.title+' '+(i.body||''), labels:(i.labels||[]).map(l=>l.name)})))
       .map(i => ({ title:i.title, url:i.html_url, number:i.number, repo, repoLabel, repoIssuesUrl, labels:(i.labels||[]).map(l=>l.name), createdAt:i.created_at }));
   }catch(e){ clearTimeout(timer); console.warn('[issues]', repo, e.message); return []; }
 }
