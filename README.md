@@ -50,8 +50,9 @@ Frontend (public/index.html) renders charts + stats
 | `llama-index-vector-stores-db2` | LlamaIndex | https://pypi.org/project/llama-index-vector-stores-db2/ |
 | `db2-sqlglot-dialect` | SQLGlot | https://pypi.org/project/db2-sqlglot-dialect/ |
 | `ibm-dbt-db2` | dbt | https://pypi.org/project/ibm-dbt-db2/ |
+| `apache-airflow-providers-ibm-db2` | Apache Airflow | https://pypi.org/project/apache-airflow-providers-ibm-db2/ |
 
-> **Released — Additions to the Ecosystem:** SQLMesh, Apache Airflow and CrewAI ship Db2 support inside their own upstream projects (no separate Db2 package), so they have no download telemetry. They are listed with links to their merged PRs. Their Db2 issues are tracked on the Open Issues page.
+> **Released — Additions to the Ecosystem:** SQLMesh and CrewAI ship Db2 support inside their own upstream projects (no separate Db2 package), so they have no download telemetry. They are listed with links to their merged PRs. Their Db2 issues are tracked on the Open Issues page.
 
 ---
 
@@ -118,4 +119,4 @@ To update the hardcoded fallback snapshot in `public/index.html`, find the `PACK
 
 - **Non-ASCII in `PEPY_API_KEY`** — Node 24 on Vercel throws `Cannot convert argument to a ByteString` if the env var contains Unicode characters. The `api/stats.js` strips non-ASCII automatically but the correct fix is to retype the key manually in Vercel dashboard.
 - **Vercel cron on Hobby** — limited to once per day. The CDN cache (`s-maxage=3600`) compensates by serving stale-while-revalidate for up to 10 minutes after expiry.
-- **pepy.tech rate limit** — 1000 requests/day on authenticated plan. At 6 packages x 1 cron call/day = 6 API calls/day. Well within limit.
+- **pepy.tech rate limit** — 1000 requests/day on authenticated plan. At 7 packages x 1 cron call/day = 7 API calls/day. Well within limit.

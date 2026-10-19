@@ -642,7 +642,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--cds-focus);outline-
       <div class="summary-panel">
         <div class="summary-panel__title">Ecosystem overview</div>
         <div class="summary-row">
-          <div class="summary-tile"><div class="label">Packages tracked</div><div class="value">6</div></div>
+          <div class="summary-tile"><div class="label">Packages tracked</div><div class="value">7</div></div>
           <div class="summary-tile"><div class="label">Total all-time</div><div class="value" id="sumAllTime"><span class="skel" style="width:60px"></span></div></div>
           <div class="summary-tile"><div class="label">Last 30 days</div><div class="value" id="sumDay"><span class="skel" style="width:60px"></span></div></div>
           <div class="summary-tile"><div class="label">Last updated</div><div class="value small" id="sumDate">fetching…</div></div>
@@ -809,6 +809,25 @@ const PACKAGES = [
     }
   },
   {
+    pkg: "apache-airflow-providers-ibm-db2",
+    framework: "Apache Airflow",
+    defn: "IBM Db2 provider for Apache Airflow — Db2 Hook and connection-type support for ETL pipeline orchestration.",
+    pypi: "https://pypi.org/project/apache-airflow-providers-ibm-db2/",
+    pepy: "https://pepy.tech/projects/apache-airflow-providers-ibm-db2?timeRange=threeMonths&category=version&includeCIDownloads=true&granularity=weekly&viewType=line&versions=Total%2C0.*",
+    version: "0.1.0",
+    license: "Apache-2.0",
+    snapshot: {
+      allTime: 2578, month: 2578, day: 483, perSec: "0.0056/s", asOf: "Oct 18",
+      note: "2,578 total · 2,578 last 30d · Oct 18",
+      weekly: [
+        {date:"2026-10-08",v:191},{date:"2026-10-09",v:46},{date:"2026-10-10",v:19},
+        {date:"2026-10-11",v:13},{date:"2026-10-12",v:38},{date:"2026-10-13",v:374},
+        {date:"2026-10-14",v:434},{date:"2026-10-15",v:298},{date:"2026-10-16",v:367},
+        {date:"2026-10-17",v:315},{date:"2026-10-18",v:483}
+      ]
+    }
+  },
+  {
     pkg: "db2-sqlglot-dialect",
     framework: "SQLGlot",
     defn: "IBM Db2 dialect plugin for SQLGlot — transpile, parse, and generate Db2 SQL with full AST support, enabling SQLMesh and other SQLGlot-based tools to target Db2.",
@@ -857,14 +876,6 @@ const RELEASED = [
     note: "Merged Oct 1, 2026 · SQLMesh PR #6030",
     link: "https://github.com/SQLMesh/sqlmesh/pull/6030",
     linkLabel: "SQLMesh PR #6030"
-  },
-  {
-    framework: "Apache Airflow",
-    statusLabel: "Released · Aug 2026",
-    desc: "IBM Db2 provider merged into Apache Airflow — Db2 Hook and connection-type support for ETL pipeline orchestration.",
-    note: "Merged Aug 23, 2026 · Airflow PR #67532",
-    link: "https://github.com/apache/airflow/pull/67532",
-    linkLabel: "Airflow PR #67532"
   },
   {
     framework: "CrewAI",

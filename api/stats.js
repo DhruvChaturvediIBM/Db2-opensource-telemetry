@@ -15,6 +15,7 @@ const PACKAGES = [
   "llama-index-vector-stores-db2",
   "db2-sqlglot-dialect",
   "ibm-dbt-db2",
+  "apache-airflow-providers-ibm-db2",
 ];
 
 async function fetchPepy(pkg, key) {
