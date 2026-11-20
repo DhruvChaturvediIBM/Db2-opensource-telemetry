@@ -934,7 +934,9 @@ const VSCODE_EXTENSIONS = [
     version: "1.1.2",
     desc: "Integrates Db2 database development directly into VS Code — manage connections, explore schemas, write and run SQL, all without switching tools. For Db2 Linux, Unix and Windows.",
     marketplaceUrl: "https://marketplace.visualstudio.com/items?itemName=IBM.db2-for-luw",
-    snapshot: { installs: 3571, rating: 5.0, ratingCount: 3, updates: 2146, downloads: 322 }
+    openVsxUrl: "https://open-vsx.org/extension/IBM/db2-for-luw",
+    openVsxApi: "https://open-vsx.org/api/IBM/db2-for-luw",
+    snapshot: { installs: 3571, rating: 5.0, ratingCount: 3, updates: 2146, downloads: 322, openVsxDownloads: 4562 }
   }
 ];
 
@@ -1058,6 +1060,28 @@ async function fetchVscodeExtension(extId){
   }catch(e){ clearTimeout(timer); throw e; }
 }
 
+// ---------------------------------------------------------------------------
+// Open VSX live fetch
+// GET https://open-vsx.org/api/{namespace}/{name}  (CORS: *)
+// ---------------------------------------------------------------------------
+async function fetchOpenVsxExtension(apiUrl){
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), 8000);
+  try{
+    const r = await fetch(apiUrl, { signal:ctrl.signal, headers:{ 'Accept':'application/json' } });
+    clearTimeout(timer);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d = await r.json();
+    if(typeof d.downloadCount !== 'number') throw new Error('no downloadCount');
+    return { downloads: Math.round(d.downloadCount) };
+  }catch(e){ clearTimeout(timer); throw e; }
+}
+
+// Combined installs = VS Code Marketplace installs + Open VSX downloads
+function vcBreakdownText(mp, ov, status){
+  return 'Marketplace '+mp.toLocaleString('en-US')+' + Open VSX '+ov.toLocaleString('en-US')+' · '+status;
+}
+
 function buildVscodeCard(ext){
   const el = document.createElement('div');
   el.className = 'vscode-card';
@@ -1071,7 +1095,7 @@ function buildVscodeCard(ext){
     <div class="vscode-stats">
       <div>
         <div class="slabel">Installs</div>
-        <div class="sval" id="vc-installs-${ext.id}">${ext.snapshot.installs.toLocaleString('en-US')}</div>
+        <div class="sval" id="vc-installs-${ext.id}">${(ext.snapshot.installs + ext.snapshot.openVsxDownloads).toLocaleString('en-US')}</div>
       </div>
       <div>
         <div class="slabel">Updates</div>
@@ -1087,8 +1111,11 @@ function buildVscodeCard(ext){
       </div>
     </div>
     <div class="vscode-card__foot">
-      <span class="vc-badge" id="vc-badge-${ext.id}">snapshot</span>
-      <a class="vc-link" href="${ext.marketplaceUrl}" target="_blank" rel="noopener">VS Code Marketplace ↗</a>
+      <span class="vc-badge" id="vc-badge-${ext.id}">${vcBreakdownText(ext.snapshot.installs, ext.snapshot.openVsxDownloads, 'snapshot')}</span>
+      <span>
+        <a class="vc-link" href="${ext.marketplaceUrl}" target="_blank" rel="noopener">VS Code Marketplace ↗</a>
+        &nbsp;&nbsp;<a class="vc-link" href="${ext.openVsxUrl}" target="_blank" rel="noopener">Open VSX ↗</a>
+      </span>
     </div>
   `;
   return el;
@@ -1096,23 +1123,32 @@ function buildVscodeCard(ext){
 
 async function refreshVscodeExtensions(){
   for(const ext of VSCODE_EXTENSIONS){
-    try{
-      const live = await fetchVscodeExtension(ext.id);
-      const stars = '★'.repeat(Math.round(live.rating))+'☆'.repeat(5-Math.round(live.rating));
-      const si = document.getElementById('vc-installs-'+ext.id);
+    const [mpRes, ovRes] = await Promise.allSettled([
+      fetchVscodeExtension(ext.id),
+      fetchOpenVsxExtension(ext.openVsxApi)
+    ]);
+    const mpLive = mpRes.status === 'fulfilled' ? mpRes.value : null;
+    const ovLive = ovRes.status === 'fulfilled' ? ovRes.value : null;
+    // each source falls back to its own snapshot independently
+    const mpInstalls = mpLive ? mpLive.installs : ext.snapshot.installs;
+    const ovDownloads = ovLive ? ovLive.downloads : ext.snapshot.openVsxDownloads;
+
+    const si = document.getElementById('vc-installs-'+ext.id);
+    const sb = document.getElementById('vc-badge-'+ext.id);
+    if(si) si.textContent = (mpInstalls + ovDownloads).toLocaleString('en-US');
+
+    if(mpLive){
+      const stars = '★'.repeat(Math.round(mpLive.rating))+'☆'.repeat(5-Math.round(mpLive.rating));
       const su = document.getElementById('vc-updates-'+ext.id);
       const sr = document.getElementById('vc-rating-'+ext.id);
       const sd = document.getElementById('vc-downloads-'+ext.id);
-      const sb = document.getElementById('vc-badge-'+ext.id);
-      if(si) si.textContent = live.installs.toLocaleString('en-US');
-      if(su) su.textContent = live.updates.toLocaleString('en-US');
-      if(sr) sr.innerHTML = live.rating.toFixed(1)+' <span class="vc-stars">'+stars+'</span>';
-      if(sd) sd.textContent = live.downloads.toLocaleString('en-US');
-      if(sb) sb.textContent = 'live · marketplace';
-    }catch(e){
-      const sb = document.getElementById('vc-badge-'+ext.id);
-      if(sb) sb.textContent = 'snapshot';
+      if(su) su.textContent = mpLive.updates.toLocaleString('en-US');
+      if(sr) sr.innerHTML = mpLive.rating.toFixed(1)+' <span class="vc-stars">'+stars+'</span>';
+      if(sd) sd.textContent = mpLive.downloads.toLocaleString('en-US');
     }
+
+    const status = (mpLive && ovLive) ? 'live' : (mpLive ? 'live marketplace · Open VSX snapshot' : (ovLive ? 'live Open VSX · marketplace snapshot' : 'snapshot'));
+    if(sb) sb.textContent = vcBreakdownText(mpInstalls, ovDownloads, status);
   }
 }
 
